@@ -1,13 +1,28 @@
-﻿// pch.h: 这是预编译标头文件。
-// 下方列出的文件仅编译一次，提高了将来生成的生成性能。
-// 这还将影响 IntelliSense 性能，包括代码完成和许多代码浏览功能。
-// 但是，如果此处列出的文件中的任何一个在生成之间有更新，它们全部都将被重新编译。
-// 请勿在此处添加要频繁更新的文件，这将使得性能优势无效。
-
-#ifndef PCH_H
+﻿#ifndef PCH_H
 #define PCH_H
 
-// 添加要在此处预编译的标头
+#include <LLAPI.h>
 #include "framework.h"
+#include "Mod.h"
 
-#endif //PCH_H
+#define PERMAPI extern "C" _declspec(dllexport)
+#define PERM_VER_MAJOR 0
+#define PERM_VER_MINOR 0
+#define PERM_VER_REV 1
+#define PERM_VER_STATUS LL::Version::Beta
+
+class Mod;
+extern Mod mod;
+
+namespace fs = std::filesystem;
+
+static Logger& logger = mod.logger;
+
+static const LL::Version PERM_VER{PERM_VER_MAJOR,
+                           PERM_VER_MINOR,
+                           PERM_VER_REV,
+                           PERM_VER_STATUS};
+static const std::string PLUGIN_DIR = "./plugins/PermissionAPI/";
+static const std::string DATA_FILE = PLUGIN_DIR + "data.json";
+
+#endif // PCH_H
