@@ -2,8 +2,9 @@
 #define PCH_H
 
 #include <LLAPI.h>
+#include <Global.h>
+#include <LoggerAPI.h>
 #include "framework.h"
-#include "Mod.h"
 
 #define PERMAPI extern "C" _declspec(dllexport)
 #define PERM_VER_MAJOR 0
@@ -13,10 +14,9 @@
 
 class Mod;
 extern Mod mod;
+extern Logger& logger;
 
 namespace fs = std::filesystem;
-
-static Logger& logger = mod.logger;
 
 static const LL::Version PERM_VER{PERM_VER_MAJOR,
                            PERM_VER_MINOR,

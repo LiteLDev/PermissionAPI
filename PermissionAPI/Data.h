@@ -40,11 +40,12 @@ struct PermGroup {
 };
 
 class Permission {
+
+public:
+
     std::unordered_map<std::string, PermGroup> groups;
     std::vector<PermAbilityInfo> abilityInfo;
     static nlohmann::json defaultData;
-
-public:
 
     /**
      * @brief Loads the data from the file.
