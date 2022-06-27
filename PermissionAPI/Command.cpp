@@ -27,24 +27,27 @@ using namespace RegisterCommandHelper;
 class PermCommand : public Command {
 
     enum class SubCommands : char {
-        Create = 0,
+        None = -1,
+        Create,
         Delete,
         Update,
         View,
         List,
-    } subcmd = (SubCommands)-1;
+    } subcmd = SubCommands::None;
     enum class Action : char {
+        None = -1,
         Add,
         Set,
         Remove
-    } action = (Action)-1;
+    } action = Action::None;
     enum class TargetType : char {
-        Group = 0,
+        None = -1,
+        Group,
         Ability,
         Player,
         Priority,
         Member
-    } targetType = (TargetType)-1;
+    } targetType = TargetType::None;
 
     std::string name1;
     std::string name2;
@@ -61,7 +64,15 @@ class PermCommand : public Command {
 public:
 
     void execute(CommandOrigin const& ori, CommandOutput& outp) const {
+        outp.setLanguageCode(ori);
+        auto oriType = (OriginType)ori.getOriginType();
+        if (subcmd == SubCommands::None) {
+            if (oriType == OriginType::Player) {
 
+            } else {
+                outp.error("Invalid command. Type '/help perm' to get help.");
+            }
+        }
 
     }
 

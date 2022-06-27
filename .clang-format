@@ -34,6 +34,7 @@ SpaceAfterCStyleCast: false
 IndentCaseLabels: true 
 TabWidth: 4
 UseTab: Never
+NamespaceIndentation: All
 
 BreakBeforeBraces: Custom
 BraceWrapping:

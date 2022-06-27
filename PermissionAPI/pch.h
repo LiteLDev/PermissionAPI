@@ -24,5 +24,6 @@ static const LL::Version PERM_VER{PERM_VER_MAJOR,
                            PERM_VER_STATUS};
 static const std::string PLUGIN_DIR = "./plugins/PermissionAPI/";
 static const std::string DATA_FILE = PLUGIN_DIR + "data.json";
+static const std::string LANG_FILE = PLUGIN_DIR + "lang.json";
 
 #endif // PCH_H

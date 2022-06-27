@@ -2,48 +2,13 @@
 #include <Global.h>
 #include <third-party/Nlohmann/json.hpp>
 #include "pch.h"
-
-struct PermAbility;
-struct PermAbilityInfo;
-struct PermGroup;
-
-//void from_json(const nlohmann::json& from, PermAbility& to);
-//void to_json(nlohmann::json& to, const PermAbility& from);
-//void from_json(const nlohmann::json& from, PermGroup& to);
-//void to_json(nlohmann::json& to, const PermGroup& from);
-
-struct PermAbility {
-    std::string name;
-    bool enabled;
-    nlohmann::json raw;
-
-    /**
-     * @brief Get the namespace of the ability.
-     * 
-     * @return std::string  The namespace of the ability.
-     */
-    inline std::string namespc() const {
-        return this->name.substr(0, this->name.find_first_of(':'));
-    }
-};
-
-struct PermAbilityInfo {
-    std::string name;
-    std::string desc;
-};
-
-struct PermGroup {
-    std::string name;
-    std::unordered_map<std::string, PermAbility> abilities;
-    std::vector<xuid_t> members;
-    int priority = 0;
-};
+#include "Data/PermGroup.hpp"
 
 class Permission {
 
 public:
 
-    std::unordered_map<std::string, PermGroup> groups;
+    PermGroups groups;
     std::vector<PermAbilityInfo> abilityInfo;
     static nlohmann::json defaultData;
 
@@ -114,5 +79,9 @@ public:
      * @return bool  True if the player is in the group, false otherwise.
      */
     bool checkIsMember(const xuid_t& xuid, const std::string& name) const;
+
+    PermGroups getPlayerGroups(const xuid_t& xuid) const;
+
+    std::vector<std::string> getPlayerAbilities(const xuid_t& xuid);
 
 };
