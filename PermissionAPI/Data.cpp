@@ -1,16 +1,34 @@
 #include <Utils/FileHelper.h>
+#include "Data/JsonHelper.hpp"
 #include "Data.h"
 
 nlohmann::json Permission::defaultData = {
-    {"abilityInfo", {}},
+    {"abilitiesInfo", {}},
     {"groups", {
         {"everyone", {
+            {"displayName", "§7everyone"},
+            {"abilities", {}},
+            {"priority", 0}
+        }},
+        {"admin", {
             {"abilities", {}},
             {"members", {}},
-            {"priority", 0}
+            {"priority", 2147483647}
         }}
     }}
 };
+
+bool Permission::validateData() {
+    bool result = true;
+    for (auto& group : this->groups) {
+        auto oldName = group.name;
+        auto changed = group.validate();
+        if (changed) {
+            logger.warn("Group name '{}' contains invalid characters.", group.name);
+            logger.warn("Group name '{}' has been replaced with '{}'.", oldName, group.name);
+        }
+    }
+}
 
 void Permission::load() {
     if (!fs::exists(DATA_FILE)) {
@@ -22,32 +40,11 @@ void Permission::load() {
     if (res.has_value()) {
         try {
             auto j = nlohmann::json::parse(res.value());
-            // AbilityInfo
-            auto& jAbilityInfo = j["abilityInfo"];
-            for (auto it = jAbilityInfo.begin(); it < jAbilityInfo.end(); it++) {
-                PermAbilityInfo info;
-                info.name = it.key();
-                info.desc = it.value()["description"];
-                this->abilityInfo.push_back(info);
-            }
-            // AbilityGroups
-            auto& jGroups = j["groups"];
-            for (auto it = jGroups.begin(); it < jGroups.end(); it++) {
-                PermGroup group;
-                group.name = it.key(); // set name
-                group.members = it.value()["members"].get<std::vector<xuid_t>>(); // set members
-                it.value()["priority"].get_to(group.priority); // set priority
-                auto& jAbilities = it.value()["abilities"];
-                for (auto ablt = jAbilities.begin(); ablt < jAbilities.end(); ablt++) { // process abilities
-                    PermAbility ab;
-                    ab.name = ablt.key();
-                    auto& val = ablt.value();
-                    val["enabled"].get_to(ab.enabled);
-                    ab.raw = val;
-                    group.abilities.push_back(ab);
-                }
-                this->groups.push_back(group);
-            }
+            // AbilitiesInfo
+            j["abilitiesInfo"].get_to(this->abilitiesInfo);
+            // Groups
+            j["groups"].get_to(this->groups);
+            this->validateData();
         } catch (const std::exception& e) {
             logger.error("Failed to process the data file: {}", e.what());
         }
@@ -59,28 +56,11 @@ void Permission::load() {
 
 void Permission::save() {
     try {
-        auto j = nlohmann::json();
-        // AbilityInfo
-        auto& jAbilities = j["abilities"];
-        for (auto& info : this->abilityInfo) {
-            jAbilities[info.name] = {
-                {"description", info.desc}
-            };
-        }
-        // AbilityGroups
-        auto& jGroups = j["groups"];
-        for (auto& group : this->groups) {
-            auto& g = jGroups[group.name];
-            g["members"] = group.members;
-            g["priority"] = group.priority;
-            auto& jAbilities = g["abilities"];
-            for (auto& ability : group.abilities) {
-                if (ability.enabled) {
-                    ability.raw["enabled"] = true;
-                }
-                jAbilities[ability.name] = ability.raw;
-            }
-        }
+        this->validateData();
+        nlohmann::json j{
+            {"abilitiesInfo", this->abilitiesInfo},
+            {"groups", this->groups}
+        };
         WriteAllFile(DATA_FILE, j.dump(4));
     } catch (const std::exception& e) {
         logger.error("Failed to save the data file: {}", e.what());
@@ -88,104 +68,22 @@ void Permission::save() {
 }
 
 void Permission::registerAbility(const std::string& nspc, const std::string& name, const std::string& desc) {
-    // Check validity
-    if (nspc.empty() || name.empty() || desc.empty() ||
-        nspc.find(':') != std::string::npos  // namespace cannot contain ':'
-        ) {
-        throw std::invalid_argument("Failed to register the ability: invalid arguments");
-        return;
+    if (nspc.find_first_of(":") != std::string::npos) {
+        throw std::invalid_argument("The namespace cannot contain ':'");
     }
-    // Check if the ability already exists
-    for (auto& i : this->abilityInfo) {
-        if (i.name == name) {
-            throw std::invalid_argument("Failed to register the ability: the ability already exists");
-            return;
-        }
+    auto fullName = nspc + ":" + name;
+    if (this->abilitiesInfo.find(fullName) != this->abilitiesInfo.end()) {
+        throw std::invalid_argument("The ability already exists");
     }
-    PermAbilityInfo info;
-    info.name = nspc + ':' + name;
-    info.desc = desc;
-    this->abilityInfo.push_back(info);
-    this->save();
-}
-
-PermAbilityInfo Permission::getAbilityInfo(const std::string& name) const {
-    for (auto& i : this->abilityInfo) {
-        if (i.name == name) {
-            return i;
-        }
-    }
-    throw std::out_of_range("Failed to get the ability info: the ability does not exist");
-}
-
-PermGroup& Permission::createGroup(const std::string& name, const std::vector<xuid_t>& members) {
-    // Check validity
-    if (name.empty()) {
-        throw std::invalid_argument("Failed to create the group: invalid arguments");
-    }
-    // Check if the group already exists
-    for (auto& group : this->groups) {
-        if (group.name == name) {
-            throw std::invalid_argument("Failed to create the group: the group already exists");
-        }
-    }
-    PermGroup group;
-    group.name = name;
-    group.members = members;
-    this->groups.push_back(group);
-    this->save();
-    return this->groups.back();
-}
-
-PermGroup& Permission::getGroup(const std::string& name) {
-    auto it = this->groups.find(name);
-    if (it == this->groups.end()) {
-        throw std::out_of_range("Failed to get the group: the group does not exist");
-    }
-    return *it;
+    this->abilitiesInfo[fullName] = PermAbilityInfo{fullName, desc};
 }
 
 bool Permission::checkAbility(const xuid_t& xuid, const std::string& name) const {
-    int currentPriority = INT_MIN;
-    bool result = false;
-    // Special case: everyone
-    if (this->groups.count("everyone") && this->groups.at("everyone").priority >= currentPriority) {
-        auto& group = this->groups.at("everyone");
-        if (group.abilities.count(name)) {
-            // Special case: if the priority is the same, result = (result && enabled)
-            if (group.priority == currentPriority) {
-                result = (result && group.abilities.at(name).enabled);
-            } else {
-                currentPriority = group.priority;
-                result = this->groups.at("everyone").abilities.at(name).enabled;
-            }
-        }
-    }
-    for (auto& group : this->groups) {
-        if (group.priority < currentPriority) {
-            continue;
-        }
-        if (group.members.contains(xuid)) { // If is in the group
-            if (group.abilities.count(name)) {
-                // Special case: if the priority is the same, result = (result && enabled)
-                if (group.priority == currentPriority) {
-                    result = (result && group.abilities.at(name).enabled);
-                } else {
-                    currentPriority = group.priority;
-                    result = group.abilities.at(name).enabled;
-                }
-            }
-        }
-    }
-    return result;
+    return this->getPlayerAbilities(xuid).contains(name);
 }
 
-bool Permission::checkIsMember(const xuid_t& xuid, const std::string& groupName) const {
-    auto it = this->groups.find(groupName);
-    if (it == this->groups.end()) {
-        throw std::out_of_range("Failed to check if the user is in the group: the group does not exist");
-    }
-    return it->members.contains(xuid);
+bool Permission::isMemberOf(const xuid_t& xuid, const std::string& groupName) const {
+    return this->groups.contains(groupName) && this->groups.at(groupName).hasMember(xuid);
 }
 
 PermGroups Permission::getPlayerGroups(const xuid_t& xuid) const {
@@ -195,23 +93,25 @@ PermGroups Permission::getPlayerGroups(const xuid_t& xuid) const {
             result.push_back(group);
         }
     }
-    return result;
+    return result.sortByPriority(true);
 }
 
-std::vector<std::string> Permission::getPlayerAbilities(const xuid_t& xuid) {
-    std::vector<std::string> result;
+PermAbilities Permission::getPlayerAbilities(const xuid_t& xuid) const {
+    PermAbilities result;
     auto playerGroups = this->getPlayerGroups(xuid);
     for (auto& group : playerGroups.sortByPriority()) {
         for (auto& ability : group.abilities) {
             if (ability.enabled) {
-                result.push_back(ability.name);
-            } else {
-                for (auto& i : result) {
-                    if (i == ability.name) {
-                        result.erase(std::remove(result.begin(), result.end(), i), result.end());
-                        break;
-                    }
+                if (result.contains(ability.name)) {
+                    auto& ext = result[ability.name].extra;
+                    if (ext.is_object()) ext.merge_patch(ability.extra);
+                    else ext = ability.extra;
+                } else {
+                    result.push_back(ability);
                 }
+            } else {
+                if (result.contains(ability.name))
+                    result.remove(ability.name);
             }
         }
     }

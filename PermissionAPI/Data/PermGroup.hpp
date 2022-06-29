@@ -4,10 +4,6 @@
 
 class PermGroup {
 
-protected:
-
-    PermMembers members; ///< The members of the group. Do not access it directly.
-
 public:
 
     enum class Type : char {
@@ -17,9 +13,13 @@ public:
         Admin = 3
     };
 
+    PermMembers members;
     PermAbilities abilities;
     std::string name;
+    std::string displayName;
     int priority = 0;
+
+    static constexpr std::string_view groupNameInvalidChars = "@#[]{}<>()/|\\$%^&*!~`\"\'+=?\n\t\r\f\v ";
 
     virtual ~PermGroup() = default;
 
@@ -53,6 +53,23 @@ public:
         return this->members;
     }
     virtual Type getType() const = 0;
+
+    /**
+     * @brief Validate the group data
+     * 
+     * @return bool  True if changed, false otherwise.
+     */
+    virtual bool validate() {
+        if (this->name.find_first_of(PermGroup::groupNameInvalidChars.data()) != std::string::npos) {
+            for (auto& ch : this->name) {
+                if (PermGroup::groupNameInvalidChars.find(ch) != std::string::npos) {
+                    ch = '-';
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 
 };
 
@@ -114,6 +131,16 @@ public:
         }
     }
 
+    virtual bool hasMember(const xuid_t& xuid) const {
+        return this->members.contains(xuid);
+    }
+    virtual void addMember(const xuid_t& xuid) {
+        this->members.push_back(xuid);
+    }
+    virtual void removeMember(const xuid_t& xuid) {
+        this->members.erase(std::remove(this->members.begin(), this->members.end(), xuid), this->members.end());
+    }
+
     virtual Type getType() const {
         return Type::Admin;
     }
@@ -124,23 +151,53 @@ class PermGroupWrapper : public std::shared_ptr<PermGroup> {
 
     using Base = std::shared_ptr<PermGroup>;
 
-    PermMembers& members;
-
 public:
 
+    PermMembers& members;
     PermAbilities& abilities;
     std::string& name;
+    std::string& displayName;
     int& priority;
 
-    PermGroupWrapper() : Base(new GeneralPermGroup()), members(this->get()->getMembers()), abilities(this->get()->abilities), name(this->get()->name), priority(this->get()->priority) {
+    PermGroupWrapper()
+        : Base(new GeneralPermGroup())
+        , members(this->get()->getMembers())
+        , abilities(this->get()->abilities)
+        , name(this->get()->name)
+        , displayName(this->get()->displayName)
+        , priority(this->get()->priority) {
     }
-    PermGroupWrapper(PermGroup* group) : Base(group), members(group->getMembers()), abilities(group->abilities), name(group->name), priority(group->priority) {
+    PermGroupWrapper(PermGroup* group)
+        : Base(group)
+        , members(group->getMembers())
+        , abilities(group->abilities)
+        , name(group->name)
+        , displayName(group->displayName)
+        , priority(group->priority) {
     }
-    PermGroupWrapper(const GeneralPermGroup& group) : Base(new GeneralPermGroup(group)), members(this->get()->getMembers()), abilities(this->get()->abilities), name(this->get()->name), priority(this->get()->priority) {
+    PermGroupWrapper(const GeneralPermGroup& group)
+        : Base(new GeneralPermGroup(group))
+        , members(this->get()->getMembers())
+        , abilities(this->get()->abilities)
+        , name(this->get()->name)
+        , displayName(this->get()->displayName)
+        , priority(this->get()->priority) {
     }
-    PermGroupWrapper(const EveryonePermGroup& group) : Base(new EveryonePermGroup(group)), members(this->get()->getMembers()), abilities(this->get()->abilities), name(this->get()->name), priority(this->get()->priority) {
+    PermGroupWrapper(const EveryonePermGroup& group)
+        : Base(new EveryonePermGroup(group))
+        , members(this->get()->getMembers())
+        , abilities(this->get()->abilities)
+        , name(this->get()->name)
+        , displayName(this->get()->displayName)
+        , priority(this->get()->priority) {
     }
-    PermGroupWrapper(const AdminPermGroup& group) : Base(new AdminPermGroup(group)), members(this->get()->getMembers()), abilities(this->get()->abilities), name(this->get()->name), priority(this->get()->priority) {
+    PermGroupWrapper(const AdminPermGroup& group)
+        : Base(new AdminPermGroup(group))
+        , members(this->get()->getMembers())
+        , abilities(this->get()->abilities)
+        , name(this->get()->name)
+        , displayName(this->get()->displayName)
+        , priority(this->get()->priority) {
     }
 
     virtual bool hasAbility(const std::string& name) const {
@@ -168,6 +225,10 @@ public:
     }
     virtual PermGroup::Type getType() const {
         return this->get()->getType();
+    }
+
+    virtual bool validate() {
+        return this->get()->validate();
     }
 
 };

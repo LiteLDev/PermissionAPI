@@ -55,6 +55,8 @@ public:
     PermVector<T>& operator=(const Base& other) {
         return (PermVector<T>&)(((Base&)*this) = other);
     }
+    PermVector<T>& operator=(const PermVector<T>& other) = default;
+    PermVector<T>& operator=(PermVector<T>&& other) = default;
 
 };
 
