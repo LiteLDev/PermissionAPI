@@ -7,6 +7,7 @@ struct PermAbility {
     bool enabled;
     nlohmann::json extra;
 
+    static constexpr const std::string_view abilityNameInvalidChars = " \t\n\r\f\v";
     /**
      * @brief Get the namespace of the ability.
      * 
@@ -14,6 +15,10 @@ struct PermAbility {
      */
     inline std::string namespc() const {
         return this->name.substr(0, this->name.find_first_of(':'));
+    }
+
+    static bool isValidAbilityName(const std::string& name) {
+        return name.find_first_of(PermAbility::abilityNameInvalidChars.data()) == std::string::npos && name.find_first_of(':') != std::string::npos;
     }
 };
 

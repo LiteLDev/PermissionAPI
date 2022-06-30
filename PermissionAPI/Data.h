@@ -1,7 +1,6 @@
 #pragma once
 #include <Global.h>
 #include <third-party/Nlohmann/json.hpp>
-#include "pch.h"
 #include "Data/PermGroup.hpp"
 
 class Permission {
@@ -28,12 +27,11 @@ public:
     /**
      * @brief Register a ability.
      * 
-     * @param  nspc  The namespace of the ability(without ':')
-     * @param  name  The name of the ability
+     * @param  name  The name of the ability like 'Namespace:AbilityName'
      * @param  desc  The description of the ability 
      * @throws std::invalid_argument
      */
-    void registerAbility(const std::string& nspc, const std::string& name, const std::string& desc);
+    void registerAbility(const std::string& name, const std::string& desc);
 
     /**
      * @brief Check if the player has the ability.

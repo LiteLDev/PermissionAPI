@@ -79,7 +79,7 @@ inline void to_json(nlohmann::json& j, const PermAbility& v) {
 // PermAbilities
 inline void from_json(const nlohmann::json& j, PermAbilities& v) {
     v.clear();
-    for (auto& it = j.begin(); it != j.end(); ++it) {
+    for (auto it = j.begin(); it != j.end(); ++it) {
         auto a = it.value().get<PermAbility>();
         a.name = it.key();
         v.push_back(a);
@@ -94,7 +94,7 @@ inline void to_json(nlohmann::json& j, const PermAbilities& v) {
 // PermAbilitiesInfo
 inline void from_json(const nlohmann::json& j, PermAbilitiesInfo& v) {
     v.clear();
-    for (auto& it = j.begin(); it != j.end(); ++it) {
+    for (auto it = j.begin(); it != j.end(); ++it) {
         PermAbilityInfo info;
         info.name = it.key();
         info.desc = it.value()["desc"];
@@ -151,14 +151,23 @@ inline void to_json(nlohmann::json& j, const AdminPermGroup& v) {
 // PermGroups
 inline void from_json(const nlohmann::json& j, PermGroups& v) {
     v.clear();
-    for (auto& it = j.begin(); it != j.end(); ++it) {
-        auto name = it.key();
+    for (auto it = j.begin(); it != j.end(); ++it) {
+        auto& name = it.key();
         if (name == "everyone") {
-            v.push_back(it.value().get<EveryonePermGroup>());
+            EveryonePermGroup group;
+            from_json(it.value(), group);
+            group.name = name;
+            v.push_back(group);
         } else if (name == "admin") {
-            v.push_back(it.value().get<AdminPermGroup>());
+            AdminPermGroup group;
+            from_json(it.value(), group);
+            group.name = name;
+            v.push_back(group);
         } else {
-            v.push_back(it.value().get<GeneralPermGroup>());
+            GeneralPermGroup group;
+            from_json(it.value(), group);
+            group.name = name;
+            v.push_back(group);
         }
         if (v.back().name.empty()) {
             throw std::runtime_error("Failed to load the perm group: the name of the group is empty!");

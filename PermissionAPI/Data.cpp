@@ -1,3 +1,4 @@
+#include "pch.h"
 #include <Utils/FileHelper.h>
 #include "Data/JsonHelper.hpp"
 #include "Data.h"
@@ -19,13 +20,20 @@ nlohmann::json Permission::defaultData = {
 };
 
 bool Permission::validateData() {
-    bool result = true;
+    bool result = false;
     for (auto& group : this->groups) {
         auto oldName = group.name;
         auto changed = group.validate();
         if (changed) {
             logger.warn("Group name '{}' contains invalid characters.", group.name);
             logger.warn("Group name '{}' has been replaced with '{}'.", oldName, group.name);
+            result = true;
+        }
+        for (auto& ab : group.abilities) {
+            if (!abilitiesInfo.contains(ab.name)) {
+                abilitiesInfo.push_back({ ab.name, "" });
+                result = true;
+            }
         }
     }
 }
@@ -67,15 +75,15 @@ void Permission::save() {
     }
 }
 
-void Permission::registerAbility(const std::string& nspc, const std::string& name, const std::string& desc) {
-    if (nspc.find_first_of(":") != std::string::npos) {
-        throw std::invalid_argument("The namespace cannot contain ':'");
+void Permission::registerAbility(const std::string& name, const std::string& desc) {
+    if (!PermAbility::isValidAbilityName(name)) {
+        throw std::invalid_argument("Invalid ability name: " + name);
     }
-    auto fullName = nspc + ":" + name;
-    if (this->abilitiesInfo.find(fullName) != this->abilitiesInfo.end()) {
+    if (this->abilitiesInfo.contains(name)) {
         throw std::invalid_argument("The ability already exists");
     }
-    this->abilitiesInfo[fullName] = PermAbilityInfo{fullName, desc};
+    this->abilitiesInfo[name] = PermAbilityInfo{name, desc};
+    this->save();
 }
 
 bool Permission::checkAbility(const xuid_t& xuid, const std::string& name) const {

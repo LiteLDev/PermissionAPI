@@ -80,26 +80,26 @@ public:
     PermContainer(PermContainer<T>&& other) = default;
 
     bool contains(const std::string& name) const {
-        for (auto& group : *this) {
-            if (group.name == name) {
+        for (auto& el : *this) {
+            if (el.name == name) {
                 return true;
             }
         }
         return false;
     }
 
-    Base::iterator find(const std::string& name) {
-        for (auto& it = this->begin(); it != this->end(); it++) {
-            if (group.name == name) {
+    typename Base::iterator find(const std::string& name) {
+        for (auto it = this->begin(); it != this->end(); it++) {
+            if (it->name == name) {
                 return it;
             }
         }
         return this->end();
     }
 
-    Base::const_iterator find(const std::string& name) const {
-        for (auto& it = this->begin(); it != this->end(); it++) {
-            if (group.name == name) {
+    typename Base::const_iterator find(const std::string& name) const {
+        for (auto it = this->begin(); it != this->end(); it++) {
+            if (it->name == name) {
                 return it;
             }
         }
@@ -108,8 +108,8 @@ public:
 
     size_t count(const std::string& name) const {
         size_t result = 0;
-        for (auto& group : *this) {
-            if (group.name == name) {
+        for (auto& el : *this) {
+            if (el.name == name) {
                 result++;
             }
         }
@@ -117,38 +117,38 @@ public:
     }
 
     template <typename ... Args>
-   T& getOrCreate(Args&& ... args) {
-        for (auto& group : *this) {
-            if (group.name == name) {
-                return group;
+   T& getOrCreate(const std::string& name, Args&& ... args) {
+        for (auto& el : *this) {
+            if (el.name == name) {
+                return el;
             }
         }
-        auto& group = this->emplace_back(args...);
-        return group;
+        auto& el = this->emplace_back(args...);
+        return el;
     }
 
     T& at(const std::string& name) {
-        for (auto& group : *this) {
-            if (group.name == name) {
-                return group;
+        for (auto& el : *this) {
+            if (el.name == name) {
+                return el;
             }
         }
         throw std::out_of_range("Failed to get the element: the element does not exist");
     }
     const T& at(const std::string& name) const {
-        for (auto& group : *this) {
-            if (group.name == name) {
-                return group;
+        for (auto& el : *this) {
+            if (el.name == name) {
+                return el;
             }
         }
         throw std::out_of_range("Failed to get the element: the element does not exist");
     }
 
-    T& push_back(const T& group) {
-        if (contains(group.name)) {
+    T& push_back(const T& el) {
+        if (contains(el.name)) {
             throw std::out_of_range("Failed to add the element: the element with the same name already exists");
         }
-        Base::push_back(group);
+        Base::push_back(el);
         return this->back();
     }
 
@@ -173,7 +173,9 @@ public:
     }
 
     T& operator[](const std::string& name) {
-        return this->getOrCreate(name);
+        T def{};
+        def.name = name;
+        return this->getOrCreate(name, def);
     }
 
     PermContainer<T>& operator=(const PermContainer<T>& other) = default;

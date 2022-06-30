@@ -1,3 +1,4 @@
+#pragma once
 #include "Foundation.hpp"
 #include "PermMember.hpp"
 #include "PermAbility.hpp"
@@ -28,7 +29,7 @@ public:
     }
     virtual void setAbility(const std::string& name, bool enabled = true, const nlohmann::json& extra = nlohmann::json()) {
         if (!this->abilities.contains(name)) {
-            this->abilities.emplace_back(name, enabled, extra);
+            this->abilities.push_back({name, enabled, extra});
         } else {
             this->abilities.at(name).enabled = enabled;
             if (!extra.is_null()) {
@@ -69,6 +70,10 @@ public:
             return true;
         }
         return false;
+    }
+
+    static bool isValidGroupName(const std::string& name) {
+        return name.find_first_of(PermGroup::groupNameInvalidChars.data()) == std::string::npos;
     }
 
 };
@@ -231,6 +236,16 @@ public:
         return this->get()->validate();
     }
 
+    virtual PermGroupWrapper& operator=(const PermGroupWrapper& other) {
+        Base::operator=(other);
+        this->members = other.members;
+        this->abilities = other.abilities;
+        this->name = other.name;
+        this->displayName = other.displayName;
+        this->priority = other.priority;
+        return *this;
+    }
+
 };
 
 class PermGroups : public PermContainer<PermGroupWrapper> {
@@ -256,8 +271,9 @@ public:
         for (auto& group : *this) {
             result.push_back(group);
         }
-        std::sort(result.begin(), result.end(), [greater](const PermGroup& a, const PermGroup& b) {
-            return greater ? a.priority > b.priority : a.priority < b.priority;
+        std::sort(result.begin(), result.end(), 
+            [greater](const PermGroupWrapper& a, const PermGroupWrapper& b) {
+                return greater ? a.priority > b.priority : a.priority < b.priority;
         });
         return result;
     }

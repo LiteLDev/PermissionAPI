@@ -19,9 +19,6 @@
     <Filter Include="Header\Data">
       <UniqueIdentifier>{21c50b64-9344-405b-a5a3-c289b0135325}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Data">
-      <UniqueIdentifier>{2dfcbaa3-9958-43f3-8ba4-cd48bdf30dc9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -42,10 +39,16 @@
     <ClInclude Include="Data\Foundation.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Data\PermGroups.hpp">
+    <ClInclude Include="Data\PermAbility.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Data\PermMembers.hpp">
+    <ClInclude Include="Data\PermGroup.hpp">
+      <Filter>Header\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\PermMember.hpp">
+      <Filter>Header\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\JsonHelper.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
   </ItemGroup>

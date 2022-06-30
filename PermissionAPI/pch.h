@@ -1,10 +1,11 @@
 ﻿#ifndef PCH_H
 #define PCH_H
 
+#define _AMD64_
+#define NOMINMAX
 #include <LLAPI.h>
 #include <Global.h>
 #include <LoggerAPI.h>
-#include "framework.h"
 
 #define PERMAPI extern "C" _declspec(dllexport)
 #define PERM_VER_MAJOR 0
@@ -12,8 +13,6 @@
 #define PERM_VER_REV 1
 #define PERM_VER_STATUS LL::Version::Beta
 
-class Mod;
-extern Mod mod;
 extern Logger& logger;
 
 namespace fs = std::filesystem;

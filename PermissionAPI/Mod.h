@@ -18,3 +18,4 @@ public:
     static const I18N::LangData defaultLangData;
 
 };
+extern Mod mod;
