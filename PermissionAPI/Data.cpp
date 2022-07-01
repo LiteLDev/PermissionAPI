@@ -4,16 +4,17 @@
 #include "Data.h"
 
 nlohmann::json Permission::defaultData = {
-    {"abilitiesInfo", {}},
+    {"abilitiesInfo", nlohmann::json::object()},
     {"groups", {
         {"everyone", {
-            {"displayName", "§7everyone"},
-            {"abilities", {}},
+            {"displayName", "§7everyone"}, 
+            {"abilities", nlohmann::json::object()},
             {"priority", 0}
         }},
         {"admin", {
-            {"abilities", {}},
-            {"members", {}},
+            {"displayName", "§cadmin"}, 
+            {"abilities", nlohmann::json::object()},
+            {"members", nlohmann::json::array()},
             {"priority", 2147483647}
         }}
     }}

@@ -3,6 +3,7 @@
 #include <MC/I18n.hpp>
 #include <MC/Localization.hpp>
 #include <EventAPI.h>
+#include <ScheduleAPI.h>
 #include "Mod.h"
 
 void SetupAllCmds(CommandRegistry* reg);
@@ -53,7 +54,7 @@ void Mod::entry() {
     auto& i18n = *Translation::load(LANG_FILE, "en_US", Mod::defaultLangData);
     perm.load();
     // Register plugin permissions
-    if (perm.abilitiesInfo.contains("PermissionAPI:cmd_control")) {
+    if (!perm.abilitiesInfo.contains("PermissionAPI:cmd_control")) {
         /*
         {
             "enabled": true,
@@ -114,4 +115,7 @@ void Mod::entry() {
         SetupAllCmds(ev.mCommandRegistry);
         return true;
     });
+    Schedule::repeat([&] {
+        mod.perm.save(); // auto save
+    }, 100); // 5s
 }
