@@ -17,7 +17,7 @@ extern Logger& logger;
 
 namespace fs = std::filesystem;
 
-static const LL::Version PERM_VER{PERM_VER_MAJOR,
+static LL::Version PERM_VER{PERM_VER_MAJOR,
                            PERM_VER_MINOR,
                            PERM_VER_REV,
                            PERM_VER_STATUS};

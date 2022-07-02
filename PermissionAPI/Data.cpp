@@ -23,20 +23,21 @@ nlohmann::json Permission::defaultData = {
 bool Permission::validateData() {
     bool result = false;
     for (auto& group : this->groups) {
-        auto oldName = group.name;
-        auto changed = group.validate();
+        auto oldName = group->name;
+        auto changed = group->validate();
         if (changed) {
-            logger.warn("Group name '{}' contains invalid characters.", group.name);
-            logger.warn("Group name '{}' has been replaced with '{}'.", oldName, group.name);
+            logger.warn("Group name '{}' contains invalid characters.", oldName);
+            logger.warn("Group name '{}' has been replaced with '{}'.", oldName, group->name);
             result = true;
         }
-        for (auto& ab : group.abilities) {
+        for (auto& ab : group->abilities) {
             if (!abilitiesInfo.contains(ab.name)) {
                 abilitiesInfo.push_back({ ab.name, "" });
                 result = true;
             }
         }
     }
+    return result;
 }
 
 void Permission::load() {
@@ -92,13 +93,13 @@ bool Permission::checkAbility(const xuid_t& xuid, const std::string& name) const
 }
 
 bool Permission::isMemberOf(const xuid_t& xuid, const std::string& groupName) const {
-    return this->groups.contains(groupName) && this->groups.at(groupName).hasMember(xuid);
+    return this->groups.contains(groupName) && this->groups.at(groupName)->hasMember(xuid);
 }
 
 PermGroups Permission::getPlayerGroups(const xuid_t& xuid) const {
     PermGroups result;
     for (auto& group : groups) {
-        if (group.hasMember(xuid)) {
+        if (group->hasMember(xuid)) {
             result.push_back(group);
         }
     }
@@ -109,7 +110,7 @@ PermAbilities Permission::getPlayerAbilities(const xuid_t& xuid) const {
     PermAbilities result;
     auto playerGroups = this->getPlayerGroups(xuid);
     for (auto& group : playerGroups.sortByPriority()) {
-        for (auto& ability : group.abilities) {
+        for (auto& ability : group->abilities) {
             if (ability.enabled) {
                 if (result.contains(ability.name)) {
                     auto& ext = result[ability.name].extra;

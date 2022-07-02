@@ -152,105 +152,9 @@ public:
 
 };
 
-class PermGroupWrapper : public std::shared_ptr<PermGroup> {
+class PermGroups : public PermPtrContainer<PermGroup> {
 
-    using Base = std::shared_ptr<PermGroup>;
-
-public:
-
-    PermMembers& members;
-    PermAbilities& abilities;
-    std::string& name;
-    std::string& displayName;
-    int& priority;
-
-    PermGroupWrapper()
-        : Base(new GeneralPermGroup())
-        , members(this->get()->getMembers())
-        , abilities(this->get()->abilities)
-        , name(this->get()->name)
-        , displayName(this->get()->displayName)
-        , priority(this->get()->priority) {
-    }
-    PermGroupWrapper(PermGroup* group)
-        : Base(group)
-        , members(group->getMembers())
-        , abilities(group->abilities)
-        , name(group->name)
-        , displayName(group->displayName)
-        , priority(group->priority) {
-    }
-    PermGroupWrapper(const GeneralPermGroup& group)
-        : Base(new GeneralPermGroup(group))
-        , members(this->get()->getMembers())
-        , abilities(this->get()->abilities)
-        , name(this->get()->name)
-        , displayName(this->get()->displayName)
-        , priority(this->get()->priority) {
-    }
-    PermGroupWrapper(const EveryonePermGroup& group)
-        : Base(new EveryonePermGroup(group))
-        , members(this->get()->getMembers())
-        , abilities(this->get()->abilities)
-        , name(this->get()->name)
-        , displayName(this->get()->displayName)
-        , priority(this->get()->priority) {
-    }
-    PermGroupWrapper(const AdminPermGroup& group)
-        : Base(new AdminPermGroup(group))
-        , members(this->get()->getMembers())
-        , abilities(this->get()->abilities)
-        , name(this->get()->name)
-        , displayName(this->get()->displayName)
-        , priority(this->get()->priority) {
-    }
-
-    virtual bool hasAbility(const std::string& name) const {
-        return this->get()->hasAbility(name);
-    }
-    virtual void setAbility(const std::string& name, bool enabled = true, const nlohmann::json& extra = nlohmann::json()) {
-        this->get()->setAbility(name, enabled, extra);
-    }
-    virtual void removeAbility(const std::string& name) {
-        this->get()->removeAbility(name);
-    }
-
-    virtual bool hasMember(const xuid_t& xuid) const {
-        return this->get()->hasMember(xuid);
-    }
-    virtual void addMember(const xuid_t& xuid) {
-        this->get()->addMember(xuid);
-    }
-    virtual void removeMember(const xuid_t& xuid) {
-        this->get()->removeMember(xuid);
-    }
-
-    virtual PermMembers& getMembers() {
-        return this->get()->getMembers();
-    }
-    virtual PermGroup::Type getType() const {
-        return this->get()->getType();
-    }
-
-    virtual bool validate() {
-        return this->get()->validate();
-    }
-
-    virtual PermGroupWrapper& operator=(const PermGroupWrapper& other) {
-        Base::operator=(other);
-        this->members = other.members;
-        this->abilities = other.abilities;
-        this->name = other.name;
-        this->displayName = other.displayName;
-        this->priority = other.priority;
-        return *this;
-    }
-
-};
-
-class PermGroups : public PermContainer<PermGroupWrapper> {
-
-    using Base = PermContainer<PermGroupWrapper>;
+    using Base = PermPtrContainer<PermGroup>;
 
 public:
 
@@ -272,10 +176,23 @@ public:
             result.push_back(group);
         }
         std::sort(result.begin(), result.end(), 
-            [greater](const PermGroupWrapper& a, const PermGroupWrapper& b) {
-                return greater ? a.priority > b.priority : a.priority < b.priority;
+            [greater](const std::shared_ptr<PermGroup>& a, const std::shared_ptr<PermGroup>& b) {
+                return greater ? a->priority > b->priority : a->priority < b->priority;
         });
         return result;
+    }
+
+    std::shared_ptr<PermGroup>& operator[](const std::string& name) {
+        PermGroup* ptr = nullptr;
+        if (name == "everyone")
+            ptr = new EveryonePermGroup;
+        else if (name == "admin")
+            ptr = new AdminPermGroup;
+        else
+            ptr = new GeneralPermGroup;
+        auto def = std::shared_ptr<PermGroup>(ptr);
+        def->name = name;
+        return this->getOrCreate(name, def);
     }
 
     PermGroups& operator=(const Base& other) {

@@ -86,6 +86,7 @@ inline void from_json(const nlohmann::json& j, PermAbilities& v) {
     }
 }
 inline void to_json(nlohmann::json& j, const PermAbilities& v) {
+    j = nlohmann::json::object();
     for (auto& it : v) {
         j[it.name] = it;
     }
@@ -101,6 +102,7 @@ inline void from_json(const nlohmann::json& j, PermAbilitiesInfo& v) {
     }
 }
 inline void to_json(nlohmann::json& j, const PermAbilitiesInfo& v) {
+    j = nlohmann::json::object();
     for (auto& it : v) {
         j[it.name] = {
             {"desc", it.desc}
@@ -157,37 +159,37 @@ inline void from_json(const nlohmann::json& j, PermGroups& v) {
             EveryonePermGroup group;
             from_json(it.value(), group);
             group.name = name;
-            v.push_back(group);
+            v.push_back(std::make_shared<EveryonePermGroup>(group));
         } else if (name == "admin") {
             AdminPermGroup group;
             from_json(it.value(), group);
             group.name = name;
-            v.push_back(group);
+            v.push_back(std::make_shared<AdminPermGroup>(group));
         } else {
             GeneralPermGroup group;
             from_json(it.value(), group);
             group.name = name;
-            v.push_back(group);
+            v.push_back(std::make_shared<GeneralPermGroup>(group));
         }
-        if (v.back().name.empty()) {
+        if (v.back()->name.empty()) {
             throw std::runtime_error("Failed to load the perm group: the name of the group is empty!");
         }
-        if (v.back().displayName.empty()) {
-            v.back().displayName = name;
+        if (v.back()->displayName.empty()) {
+            v.back()->displayName = name;
         }
     }
 }
 inline void to_json(nlohmann::json& j, const PermGroups& v) {
     for (auto& it : v) {
-        switch (it.getType()) {
+        switch (it->getType()) {
             case PermGroup::Type::General:
-                j[it.name] = *(GeneralPermGroup*)it.get();
+                j[it->name] = *(GeneralPermGroup*)it.get();
                 break;
             case PermGroup::Type::Admin:
-                j[it.name] = *(AdminPermGroup*)it.get();
+                j[it->name] = *(AdminPermGroup*)it.get();
                 break;
             case PermGroup::Type::Everyone:
-                j[it.name] = *(EveryonePermGroup*)it.get();
+                j[it->name] = *(EveryonePermGroup*)it.get();
                 break;
             default:
                 break;

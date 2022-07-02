@@ -41,7 +41,28 @@ const I18N::LangData Mod::defaultLangData = {
         {"No groups.", "无权限组"},
         {"No abilities.", "无能力"},
         {"Member", "成员"},
-        {"Player not found", "找不到玩家"}
+        {"Player not found", "找不到玩家"},
+        {"+ §eMembers§r: None", "+ §e成员§r: 无"},
+        {"+ §eMembers§r:", "+ §e成员§r:"},
+        {"+ §eName§r: {}", "+ §e名称§r: {}"},
+        {"+ §eDisplayName§r: {}", "+ §e显示名称§r: {}"},
+        {"+ §ePriority§r: {}", "+ §e优先级§r: {}"},
+        {"+ §eAbilities§r: None", "+ §e能力§r: 无"},
+        {"+ §eAbilities§r:", "+ §e能力§r:"},
+        {"※ {}§r is a special group. All the abilities will be enabled by default unless it has been disabled in the config.", "※ {}§r 是一个特殊的权限组, 所有的能力将会默认开启除非它在配置文件中被禁用"},
+        {"※ {}§r is a special group. All players are members of this group.", "※ {}§r 是一个特殊的权限组, 所有的玩家都是这个权限组的成员"},
+        {"The group is a everyone group. You cannot modify the members of it.", "这是一个\"所有人\"权限组, 你不能修改它的成员"},
+        {"Member {}({}) added.", "成员 {}({}) 已添加"},
+        {"Member {}({}) removed.", "成员 {}({}) 已移除"},
+        {"Ability {} added.", "能力 {} 已添加"},
+        {"Ability {} set to {}.", "能力 {} 已设置为 {}"},
+        {"Ability {} removed.", "能力 {} 已移除"},
+        {"Missing argument: enabled", "找不到命令参数: enabled"},
+        {"§aenabled", "§a已启用"},
+        {"§cdisabled", "§c已禁用"},
+        {"Priority set to {}.", "优先级已设置为 {}"},
+        {"Display name set to {}.", "显示名称已设置为 {}"},
+        {"JSON parsing error: {}", "JSON解析错误: {}"}
     }}
 };
 
@@ -50,7 +71,7 @@ Mod::Mod()
 }
 
 void Mod::entry() {
-    logger.info("PermissionAPI v{} loaded! Author: Jasonzyt");
+    logger.info("PermissionAPI v{} loaded! Author: Jasonzyt", PERM_VER.toString(true));
     auto& i18n = *Translation::load(LANG_FILE, "en_US", Mod::defaultLangData);
     perm.load();
     // Register plugin permissions
