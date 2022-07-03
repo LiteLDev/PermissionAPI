@@ -68,6 +68,9 @@
     <ClCompile Include="Command.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="ExportAPI.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">
