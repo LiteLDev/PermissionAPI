@@ -184,6 +184,7 @@ copy /Y "$(TargetPath)" "$(LocalDebuggerWorkingDirectory)\plugins\"
     <ClInclude Include="framework.h" />
     <ClInclude Include="Mod.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PermissionAPI.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

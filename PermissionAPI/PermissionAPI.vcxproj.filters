@@ -51,6 +51,9 @@
     <ClInclude Include="Data\JsonHelper.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
+    <ClInclude Include="PermissionAPI.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

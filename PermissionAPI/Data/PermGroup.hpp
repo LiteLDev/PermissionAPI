@@ -195,6 +195,8 @@ public:
         return this->getOrCreate(name, def);
     }
 
+    PermGroups& operator=(const PermGroups& other) = default;
+    PermGroups& operator=(PermGroups&& other) = default;
     PermGroups& operator=(const Base& other) {
         return (PermGroups&)((Base&)*this) = other;
     }
