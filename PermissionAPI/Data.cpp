@@ -88,6 +88,21 @@ void Permission::registerAbility(const std::string& name, const std::string& des
     this->save();
 }
 
+void Permission::deleteAbility(const std::string& name) {
+    if (!this->abilitiesInfo.contains(name)) {
+        throw std::invalid_argument("Ability not found");
+    }
+    this->abilitiesInfo.remove(name);
+    for (auto& group : this->groups) {
+        if (group->getType() != PermGroup::Type::Admin) {
+            if (group->abilityDefined(name)) {
+                group->removeAbility(name);
+            }
+        }
+    }
+    this->save();
+}
+
 bool Permission::checkAbility(const xuid_t& xuid, const std::string& name) const {
     return this->getPlayerAbilities(xuid).contains(name);
 }
@@ -108,6 +123,12 @@ PermGroups Permission::getPlayerGroups(const xuid_t& xuid) const {
 
 PermAbilities Permission::getPlayerAbilities(const xuid_t& xuid) const {
     PermAbilities result;
+    if (this->isMemberOf(xuid, "admin")) {
+        for (auto& info : abilitiesInfo) {
+            result.push_back(PermAbility{info.name, true});
+        }
+        return result;
+    }
     auto playerGroups = this->getPlayerGroups(xuid);
     for (auto& group : playerGroups.sortByPriority()) {
         for (auto& ability : group->abilities) {

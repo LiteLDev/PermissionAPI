@@ -44,6 +44,9 @@ public:
     virtual void removeAbility(const std::string& name) {
         this->abilities.remove(name);
     }
+    virtual bool abilityDefined(const std::string& name) {
+        return this->abilities.contains(name);
+    }
 
     virtual bool hasMember(const xuid_t& xuid) const = 0;
     virtual void addMember(const xuid_t& xuid) = 0;

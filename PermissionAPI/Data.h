@@ -33,6 +33,8 @@ public:
      */
     void registerAbility(const std::string& name, const std::string& desc);
 
+    void deleteAbility(const std::string& name);
+
     /**
      * @brief Check if the player has the ability.
      * 

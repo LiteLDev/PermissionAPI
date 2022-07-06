@@ -62,7 +62,9 @@ const I18N::LangData Mod::defaultLangData = {
         {"§cdisabled", "§c已禁用"},
         {"Priority set to {}.", "优先级已设置为 {}"},
         {"Display name set to {}.", "显示名称已设置为 {}"},
-        {"JSON parsing error: {}", "JSON解析错误: {}"}
+        {"JSON parsing error: {}", "JSON解析错误: {}"},
+        {"§b§lGroup List:", "§b§l权限组列表:"},
+        {"§b§lAbility List:", "§b§l权限能力列表:"},
     }}
 };
 

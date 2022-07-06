@@ -452,8 +452,7 @@ class PermCommand : public Command {
                     outp.trError("Ability does not exist.");
                     break;
                 }
-                mod.perm.abilitiesInfo.remove(this->name1);
-                mod.perm.save();
+                mod.perm.deleteAbility(this->name1);
                 outp.trSuccess("Ability deleted.");
                 return true;
             default:
@@ -481,8 +480,8 @@ class PermCommand : public Command {
                         }
                         if (mod.perm.isMemberOf(pl->getXuid(), group->name)) {
                             outp.trAddMessage("* " + group->displayName + " §r(§e" + pl->tr("Member") + "§r)");
+                            continue;
                         }
-                        continue;
                     }
                     outp.trAddMessage("* " + group->displayName);
                 }
@@ -496,6 +495,19 @@ class PermCommand : public Command {
                 }
                 outp.trAddMessage("§b§lAbility List:");
                 for (auto& ability : mod.perm.abilitiesInfo) {
+                    if (ability.desc.empty()) {
+                        if ((OriginType)ori.getOriginType() == OriginType::Player) {
+                            auto pl = ori.getPlayer();
+                            if (!pl) {
+                                outp.trError("Internal error. Please try again later.");
+                                break;
+                            }  
+                            outp.trAddMessage("* " + ability.name + ": " + pl->tr("[No description]"));
+                            continue;
+                        }
+                        outp.trAddMessage("* " + ability.name + ": " + tr("[No description]"));
+                        continue;
+                    }
                     outp.trAddMessage("* " + ability.name + ": " + ability.desc);
                 }
                 return true;
@@ -588,7 +600,7 @@ class PermCommand : public Command {
                         if (!pl) {
                             outp.trError("Internal error. Please try again later.");
                             break;
-                        }    
+                        }
                         outp.addMessage("  * " + ability.name + ": " + 
                             (mod.perm.abilitiesInfo.contains(ability.name) ?
                                 mod.perm.abilitiesInfo[ability.name].desc : pl->tr("[No description]")));
@@ -843,6 +855,7 @@ public:
                 outp.trError("Internal error. Please try again later.");
                 return;
             }
+            outp.addMessage("[DEBUG] Your language: " + pl->getLanguageCode());
             if (!checkPermission(pl->getXuid())) {
                 outp.trError("You don't have permission to use this command.");
                 return;

@@ -11,6 +11,7 @@ class PermissionAPI {
     using FuncGetGroup = void(*)(const std::string&, std::weak_ptr<PermGroup>&);
     using FuncGetOrCreateGroup = void(*)(const std::string&, std::weak_ptr<PermGroup>&);
     using FuncRegisterAbility = void(*)(const std::string&, const std::string&);
+    using FuncDeleteAbility = void(*)(const std::string&);
     using FuncAbilityExists = bool(*)(const std::string&);
     using FuncHasAbility = bool(*)(const xuid_t&, const std::string&);
     using FuncIsMemberOf = bool(*)(const xuid_t&, const std::string&);
@@ -23,6 +24,7 @@ class PermissionAPI {
     FuncGetGroup funcGetGroup;
     FuncGetOrCreateGroup funcGetOrCreateGroup;
     FuncRegisterAbility funcRegisterAbility;
+    FuncDeleteAbility funcDeleteAbility;
     FuncAbilityExists funcAbilityExists;
     FuncHasAbility funcHasAbility;
     FuncIsMemberOf funcIsMemberOf;
@@ -49,6 +51,7 @@ public:
         funcGetGroup = getFunc<FuncGetGroup>("PERM_GetGroup");
         funcGetOrCreateGroup = getFunc<FuncGetOrCreateGroup>("PERM_GetOrCreateGroup");
         funcRegisterAbility = getFunc<FuncRegisterAbility>("PERM_RegisterAbility");
+        funcDeleteAbility = getFunc<FuncDeleteAbility>("PERM_DeleteAbility");
         funcAbilityExists = getFunc<FuncAbilityExists>("PERM_AbilityExists");
         funcHasAbility = getFunc<FuncHasAbility>("PERM_HasAbility");
         funcIsMemberOf = getFunc<FuncIsMemberOf>("PERM_IsMemberOf");
@@ -123,13 +126,24 @@ public:
 
     /**
      * @brief Register an ability.
-     * 
+     *
      * @param name  The name of the ability.
      * @param desc  The description name of the ability.
      */
     void registerAbility(const std::string& name, const std::string& desc) {
         if (funcRegisterAbility == nullptr) throw std::runtime_error("Function not found");
         funcRegisterAbility(name, desc);
+    }
+    
+    /**
+     * @brief Delete an ability.
+     * 
+     * @param    name  The name of the ability.
+     * @warning  This function will also delete the ability instance in groups.
+     */
+    void deleteAbility(const std::string& name) {
+        if (funcDeleteAbility == nullptr) throw std::runtime_error("Function not found");
+        funcDeleteAbility(name);
     }
 
     /**

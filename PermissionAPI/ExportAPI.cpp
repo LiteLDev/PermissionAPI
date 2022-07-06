@@ -2,6 +2,8 @@
 #include "Mod.h"
 #include "Data.h"
 
+#pragma warning(disable: 4297)
+
 PERMAPI void PERM_CreateGroup(const std::string& name, const std::string& displayName, std::weak_ptr<PermGroup>& ret) {
     if (mod.perm.groups.contains(name)) {
         throw std::invalid_argument("Group already exists");
@@ -36,11 +38,11 @@ PERMAPI void PERM_GetOrCreateGroup(const std::string& name, std::weak_ptr<PermGr
 }
 
 PERMAPI void PERM_RegisterAbility(const std::string& name, const std::string& desc) {
-    if (mod.perm.abilitiesInfo.contains(name)) {
-        throw std::invalid_argument("Ability already exists");     
-    }
-    mod.perm.abilitiesInfo[name] = {name, desc};
-    mod.perm.save();
+    mod.perm.registerAbility(name, desc);
+}
+
+PERMAPI void PERM_DeleteAbility(const std::string& name) {
+    mod.perm.deleteAbility(name);
 }
 
 PERMAPI bool PERM_AbilityExists(const std::string& name) {
