@@ -34,12 +34,12 @@ class PermissionAPI {
 
     template <typename T>
     T getFunc(const std::string& name) {
-        return GetProcAddress(plugin.handle, name.c_str());
+        return (T)GetProcAddress(plugin.handle, name.c_str());
     }
 
 public:
     
-    PermissionAPI(bool option = false) {
+    void init() {
         if (!LL::hasPlugin("PermissionAPI")) {
             throw std::runtime_error("Dependency plugin PermissionAPI not found");
         }
@@ -58,6 +58,10 @@ public:
         funcGetPlayerGroups = getFunc<FuncGetPlayerGroups>("PERM_GetPlayerGroups");
         funcGetPlayerAbilities = getFunc<FuncGetPlayerAbilities>("PERM_GetPlayerAbilities");
         funcSaveData = getFunc<FuncSaveData>("PERM_SaveData");
+    }
+
+    PermissionAPI(bool lateinit = false) {
+        if (!lateinit) init();
     }
 
     /**
