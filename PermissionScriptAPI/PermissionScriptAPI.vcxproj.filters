@@ -21,9 +21,6 @@
     <ClInclude Include="framework.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Header</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -47,27 +44,6 @@
       <Filter>Lib</Filter>
     </Library>
     <Library Include="..\SDK\Lib\bedrock_server_var.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="..\SDK\LLSE\third-party\ScriptX\lib\ScriptX-Js.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="..\SDK\LLSE\third-party\ScriptX\lib\ScriptX-Lua.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\v8_libplatform.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\zlib.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\v8.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\v8_libbase.lib">
-      <Filter>Lib</Filter>
-    </Library>
-    <Library Include="..\SDK\LLSE\third-party\Lua\lib\lua.lib">
       <Filter>Lib</Filter>
     </Library>
   </ItemGroup>

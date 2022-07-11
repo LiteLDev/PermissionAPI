@@ -6,6 +6,7 @@
 #include <ScheduleAPI.h>
 #include "Mod.h"
 
+void ListenRegScriptClassEvent();
 void SetupAllCmds(CommandRegistry* reg);
 
 Mod mod;
@@ -138,6 +139,7 @@ void Mod::entry() {
         SetupAllCmds(ev.mCommandRegistry);
         return true;
     });
+    ListenRegScriptClassEvent();
     Schedule::repeat([&] {
         mod.perm.save(); // auto save
     }, 100); // 5s

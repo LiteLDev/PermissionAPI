@@ -1,8 +1,6 @@
 ﻿#ifndef PCH_H
 #define PCH_H
 
-#define _AMD64_
-#define NOMINMAX
 #include <LLAPI.h>
 #include <Global.h>
 #include <LoggerAPI.h>

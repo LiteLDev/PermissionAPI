@@ -165,7 +165,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -182,13 +181,6 @@
     <Library Include="..\SDK\Lib\bedrock_server_var.lib" />
     <Library Include="..\SDK\Lib\LiteLoader.lib" />
     <Library Include="..\SDK\Lib\SymDBHelper.lib" />
-    <Library Include="..\SDK\LLSE\third-party\Lua\lib\lua.lib" />
-    <Library Include="..\SDK\LLSE\third-party\ScriptX\lib\ScriptX-Js.lib" />
-    <Library Include="..\SDK\LLSE\third-party\ScriptX\lib\ScriptX-Lua.lib" />
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\v8.lib" />
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\v8_libbase.lib" />
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\v8_libplatform.lib" />
-    <Library Include="..\SDK\LLSE\third-party\V8\lib\zlib.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
