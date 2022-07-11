@@ -13,7 +13,7 @@ class PermissionAPI {
     using FuncRegisterAbility = void(*)(const std::string&, const std::string&);
     using FuncDeleteAbility = void(*)(const std::string&);
     using FuncAbilityExists = bool(*)(const std::string&);
-    using FuncHasAbility = bool(*)(const xuid_t&, const std::string&);
+    using FuncCheckAbility = bool(*)(const xuid_t&, const std::string&);
     using FuncIsMemberOf = bool(*)(const xuid_t&, const std::string&);
     using FuncGetPlayerGroups = void(*)(const xuid_t&, PermGroups&);
     using FuncGetPlayerAbilities = void(*)(const xuid_t&, PermAbilities&);
@@ -26,7 +26,7 @@ class PermissionAPI {
     FuncRegisterAbility funcRegisterAbility;
     FuncDeleteAbility funcDeleteAbility;
     FuncAbilityExists funcAbilityExists;
-    FuncHasAbility funcHasAbility;
+    FuncCheckAbility funcCheckAbility;
     FuncIsMemberOf funcIsMemberOf;
     FuncGetPlayerGroups funcGetPlayerGroups;
     FuncGetPlayerAbilities funcGetPlayerAbilities;
@@ -53,7 +53,7 @@ public:
         funcRegisterAbility = getFunc<FuncRegisterAbility>("PERM_RegisterAbility");
         funcDeleteAbility = getFunc<FuncDeleteAbility>("PERM_DeleteAbility");
         funcAbilityExists = getFunc<FuncAbilityExists>("PERM_AbilityExists");
-        funcHasAbility = getFunc<FuncHasAbility>("PERM_HasAbility");
+        funcCheckAbility = getFunc<FuncCheckAbility>("PERM_CheckAbility");
         funcIsMemberOf = getFunc<FuncIsMemberOf>("PERM_IsMemberOf");
         funcGetPlayerGroups = getFunc<FuncGetPlayerGroups>("PERM_GetPlayerGroups");
         funcGetPlayerAbilities = getFunc<FuncGetPlayerAbilities>("PERM_GetPlayerAbilities");
@@ -158,15 +158,15 @@ public:
     }
 
     /**
-     * @brief Check if a player has an ability.
+     * @brief Check whether the player has the ability or not.
      * 
      * @param  xuid  The xuid of the player.
      * @param  name  The name of the ability.
      * @return bool  True If the player has the ability, false otherwise.
      */
-    bool hasAbility(const xuid_t& xuid, const std::string& name) {
-        if (funcHasAbility == nullptr) throw std::runtime_error("Function not found");
-        return funcHasAbility(xuid, name);
+    bool checkAbility(const xuid_t& xuid, const std::string& name) {
+        if (funcCheckAbility == nullptr) throw std::runtime_error("Function not found");
+        return funcCheckAbility(xuid, name);
     }
 
     /**

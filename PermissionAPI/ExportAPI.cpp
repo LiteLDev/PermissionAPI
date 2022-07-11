@@ -5,21 +5,7 @@
 #pragma warning(disable: 4297)
 
 PERMAPI void PERM_CreateGroup(const std::string& name, const std::string& displayName, std::weak_ptr<PermGroup>& ret) {
-    if (mod.perm.groups.contains(name)) {
-        throw std::invalid_argument("Group already exists");
-    }
-    PermGroup* group = nullptr;
-    if (name == "everyone") {
-        group = new EveryonePermGroup;
-    } else if (name == "admin") {
-        group = new AdminPermGroup;
-    } else {
-        group = new GeneralPermGroup;
-    }
-    group->name = name;
-    group->displayName = displayName;
-    ret = (mod.perm.groups[name] = std::shared_ptr<PermGroup>(group));
-    mod.perm.save();
+    ret = mod.perm.createGroup(name, displayName);
 }
 
 PERMAPI bool PERM_GroupExists(const std::string& name) {
@@ -27,14 +13,11 @@ PERMAPI bool PERM_GroupExists(const std::string& name) {
 }
 
 PERMAPI void PERM_GetGroup(const std::string& name, std::weak_ptr<PermGroup>& ret) {
-    if (!mod.perm.groups.contains(name)) {
-        throw std::invalid_argument("Group not found");
-    }
-    ret = mod.perm.groups[name];
+    ret = mod.perm.getGroup(name);
 }
 
 PERMAPI void PERM_GetOrCreateGroup(const std::string& name, std::weak_ptr<PermGroup>& ret) {
-    ret = mod.perm.groups[name];
+    ret = mod.perm.getOrCreateGroup(name);
 }
 
 PERMAPI void PERM_RegisterAbility(const std::string& name, const std::string& desc) {
@@ -49,7 +32,7 @@ PERMAPI bool PERM_AbilityExists(const std::string& name) {
     return mod.perm.abilitiesInfo.contains(name);
 }
 
-PERMAPI bool PERM_HasAbility(const xuid_t& xuid, const std::string& name) {
+PERMAPI bool PERM_checkAbility(const xuid_t& xuid, const std::string& name) {
     return mod.perm.checkAbility(xuid, name);
 }
 

@@ -387,15 +387,9 @@ class PermCommand : public Command {
                     outp.trError("Group already exists.");
                     break;
                 }
-                if (!PermGroup::isValidGroupName(this->name1)) {
-                    outp.trError("Invalid group name.");
-                }
-                GeneralPermGroup group;
-                group.name = this->name1;
-                if (this->priority_set) group.priority = this->priority;
-                if (this->displayName_set) group.displayName = this->displayName;
-                else group.displayName = this->name1;
-                mod.perm.groups[this->name1] = std::make_shared<GeneralPermGroup>(group);
+                auto group = mod.perm.createGroup(this->name1, this->name1);
+                if (this->priority_set) group->priority = this->priority;
+                if (this->displayName_set) group->displayName = this->displayName;
                 mod.perm.save();
                 outp.trSuccess("Group created.");
                 return true;

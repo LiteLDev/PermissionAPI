@@ -77,6 +77,36 @@ void Permission::save() {
     }
 }
 
+std::shared_ptr<PermGroup> Permission::createGroup(const std::string& name, const std::string& displayName) {
+    if (this->groups.contains(name)) {
+        throw std::invalid_argument("Group already exists");
+    }
+    PermGroup* group = nullptr;
+    if (name == "everyone") {
+        group = new EveryonePermGroup;
+    } else if (name == "admin") {
+        group = new AdminPermGroup;
+    } else {
+        group = new GeneralPermGroup;
+    }
+    group->name = name;
+    group->displayName = displayName;
+    auto& ret = this->groups[name] = std::shared_ptr<PermGroup>(group);
+    save();
+    return ret;
+}
+
+std::shared_ptr<PermGroup> Permission::getGroup(const std::string& name) {
+    if (!this->groups.contains(name)) {
+        throw std::invalid_argument("Group not found");
+    }
+    return this->groups.at(name);
+}
+
+std::shared_ptr<PermGroup> Permission::getOrCreateGroup(const std::string& name) {
+    return (this->groups.contains(name) ? getGroup(name) : createGroup(name, name));
+}
+
 void Permission::registerAbility(const std::string& name, const std::string& desc) {
     if (!PermAbility::isValidAbilityName(name)) {
         throw std::invalid_argument("Invalid ability name: " + name);

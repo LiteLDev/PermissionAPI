@@ -23,6 +23,19 @@ public:
      * 
      */
     void save();
+
+    /**
+     * @brief Create a group.
+     * 
+     * @param  name         The name of the group.
+     * @param  diaplayName  The display name of the group.
+     * @return std::shared_ptr<PermGroup>  The shared pointer to the group.
+     */
+    std::shared_ptr<PermGroup> createGroup(const std::string& name, const std::string& displayName);
+
+    std::shared_ptr<PermGroup> getGroup(const std::string& name);
+
+    std::shared_ptr<PermGroup> getOrCreateGroup(const std::string& name);
     
     /**
      * @brief Register a ability.
