@@ -169,9 +169,8 @@ LibraryBuilder.exe -o ..\Lib\
 :end</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>if exist "$(LocalDebuggerWorkingDirectory)\plugins\" (
-copy /Y "$(TargetPath)" "$(LocalDebuggerWorkingDirectory)\plugins\"
-)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
