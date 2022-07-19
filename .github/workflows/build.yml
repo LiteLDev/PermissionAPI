@@ -55,7 +55,7 @@ jobs:
           mkdir temp/release
           cp x64/Release/PermissionAPI.dll temp/release/
           cp x64/Release/PermissionAPI.pdb temp/release/
-          zip temp/release/* PermissionAPI.zip
+          Tools/7z/7za.exe a PermissionAPI.zip temp/release/** -tzip
         shell: bash
 
       - name: Upload PermissionAPI
