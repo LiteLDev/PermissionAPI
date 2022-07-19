@@ -25,15 +25,17 @@ jobs:
           mkdir SDK/Tools/Server
           curl -L -o LINK.txt https://raw.githubusercontent.com/LiteLDev/LiteLoaderBDS/main/Scripts/LINK.txt
           ServerLink=$(cat 'LINK.txt')
+          echo "ServerLink: $ServerLink"
           curl -L -o SDK/Tools/Server/server.zip "$ServerLink"
           unzip SDK/Tools/Server/server.zip -d SDK/Tools/Server/ > /dev/null
+          ls SDK/Tools/Server
         shell: bash
 
       - name: Build Library
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: |
           cd SDK/Tools
-          LibraryBuilder.exe Server
+          LibraryBuilder.exe ./Server/
         shell: cmd
 
       - name: Add MSBuild to PATH
