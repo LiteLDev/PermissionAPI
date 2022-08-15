@@ -11,7 +11,7 @@ void SetupAllCmds(CommandRegistry* reg);
 Mod mod;
 Logger& logger = mod.logger;
 
-const I18N::LangData Mod::defaultLangData = {
+const I18nBase::LangData Mod::defaultLangData = {
     {"zh_CN", {
         {"Invalid command. Type '/help perm' to get help.", "无效的命令, 输入'/help perm'以获取帮助"},
         {"Failed to process the data file: {}", "处理数据文件失败: {}"},
@@ -74,7 +74,7 @@ Mod::Mod()
 
 void Mod::entry() {
     logger.info("PermissionAPI v{} loaded! Author: Jasonzyt", PERM_VER.toString(true));
-    auto& i18n = *Translation::load(LANG_FILE, "en_US", Mod::defaultLangData);
+    auto i18n = Translation::load(LANG_FILE, "en_US", Mod::defaultLangData);
     perm.load();
     // Register plugin permissions
     if (!perm.abilitiesInfo.contains("PermissionAPI:cmd_control")) {
@@ -131,7 +131,9 @@ void Mod::entry() {
     Event::ServerStartedEvent::subscribe([&](const Event::ServerStartedEvent& ev) { 
         auto lang = I18n::getCurrentLanguage().get()->getFullLanguageCode();
         logger.debug("Switch language: {}", lang);
-        i18n.defaultLangCode = lang;
+        if (!i18n) {
+            i18n->defaultLocaleName = lang;
+        }
         return true;
     });
     Event::RegCmdEvent::subscribe([&](const Event::RegCmdEvent& ev) {

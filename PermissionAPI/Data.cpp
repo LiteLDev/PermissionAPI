@@ -26,8 +26,8 @@ bool Permission::validateData() {
         auto oldName = group->name;
         auto changed = group->validate();
         if (changed) {
-            logger.warn("Group name '{}' contains invalid characters.", oldName);
-            logger.warn("Group name '{}' has been replaced with '{}'.", oldName, group->name);
+            logger.warn(tr("Group name '{}' contains invalid characters.", oldName));
+            logger.warn(tr("Group name '{}' has been replaced with '{}'.", oldName, group->name));
             result = true;
         }
         for (auto& ab : group->abilities) {
@@ -56,10 +56,10 @@ void Permission::load() {
             j["groups"].get_to(this->groups);
             this->validateData();
         } catch (const std::exception& e) {
-            logger.error("Failed to process the data file: {}", e.what());
+            logger.error(tr("Failed to process the data file: {}", e.what()));
         }
     } else {
-        logger.error("Failed to read the data file at {}", DATA_FILE);
+        logger.error(tr("Failed to read the data file at {}", DATA_FILE));
         return;
     }
 }
@@ -73,7 +73,7 @@ void Permission::save() {
         };
         WriteAllFile(DATA_FILE, j.dump(4));
     } catch (const std::exception& e) {
-        logger.error("Failed to save the data file: {}", e.what());
+        logger.error(tr("Failed to save the data file: {}", e.what()));
     }
 }
 

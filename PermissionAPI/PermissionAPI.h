@@ -4,7 +4,7 @@
 
 class PermissionAPI {
 
-    LL::Plugin plugin;
+    HMODULE hPlugin;
 
     using FuncCreateGroup = void(*)(const std::string&, const std::string&, std::weak_ptr<PermGroup>&);
     using FuncGroupExists = bool(*)(const std::string&);
@@ -34,7 +34,7 @@ class PermissionAPI {
 
     template <typename T>
     T getFunc(const std::string& name) {
-        return GetProcAddress(plugin.handle, name.c_str());
+        return GetProcAddress(hPlugin, name.c_str());
     }
 
 public:
@@ -44,8 +44,10 @@ public:
             throw std::runtime_error("Dependency plugin PermissionAPI not found");
         }
         auto pPtr = LL::getPlugin("PermissionAPI");
-        if (!pPtr) throw std::runtime_error("Cannot get the plugin object");
-        plugin = *pPtr;
+        if (!pPtr) {
+            throw std::runtime_error("Cannot get the plugin object");
+        }
+        hPlugin = pPtr->handle;
         funcCreateGroup = getFunc<FuncCreateGroup>("PERM_CreateGroup");
         funcGroupExists = getFunc<FuncGroupExists>("PERM_GroupExists");
         funcGetGroup = getFunc<FuncGetGroup>("PERM_GetGroup");
@@ -80,7 +82,9 @@ public:
      * @endcode
      */
     std::weak_ptr<PermGroup> createGroup(const std::string& name, const std::string& displayName) {
-        if (funcCreateGroup == nullptr) throw std::runtime_error("Function not found");
+        if (funcCreateGroup == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         std::weak_ptr<PermGroup> ptr{};
         funcCreateGroup(name, displayName, ptr);
         return ptr;
@@ -93,7 +97,9 @@ public:
      * @return bool  True If the group exists, false otherwise.
      */
     bool groupExists(const std::string& name) {
-        if (funcGroupExists == nullptr) throw std::runtime_error("Function not found");
+        if (funcGroupExists == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         return funcGroupExists(name);
     }
 
@@ -105,7 +111,9 @@ public:
      * @throws std::invalid_argument     If the group does not exist. 
      */
     std::weak_ptr<PermGroup> getGroup(const std::string& name) {
-        if (funcGetGroup == nullptr) throw std::runtime_error("Function not found");
+        if (funcGetGroup == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         std::weak_ptr<PermGroup> ptr{};
         funcGetGroup(name, ptr);
         return ptr;
@@ -118,7 +126,9 @@ public:
      * @return std::weak_ptr<PermGroup>  The group(weak ref).
      */
     std::weak_ptr<PermGroup> getOrCreateGroup(const std::string& name) {
-        if (funcGetOrCreateGroup == nullptr) throw std::runtime_error("Function not found");
+        if (funcGetOrCreateGroup == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         std::weak_ptr<PermGroup> ptr{};
         funcGetOrCreateGroup(name, ptr);
         return ptr;
@@ -131,7 +141,9 @@ public:
      * @param desc  The description name of the ability.
      */
     void registerAbility(const std::string& name, const std::string& desc) {
-        if (funcRegisterAbility == nullptr) throw std::runtime_error("Function not found");
+        if (funcRegisterAbility == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         funcRegisterAbility(name, desc);
     }
     
@@ -142,7 +154,9 @@ public:
      * @warning  This function will also delete the ability instance in groups.
      */
     void deleteAbility(const std::string& name) {
-        if (funcDeleteAbility == nullptr) throw std::runtime_error("Function not found");
+        if (funcDeleteAbility == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         funcDeleteAbility(name);
     }
 
@@ -153,7 +167,9 @@ public:
      * @return bool  True If the ability exists, false otherwise.
      */
     bool abilityExists(const std::string& name) {
-        if (funcAbilityExists == nullptr) throw std::runtime_error("Function not found");
+        if (funcAbilityExists == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         return funcAbilityExists(name);
     }
 
@@ -165,7 +181,9 @@ public:
      * @return bool  True If the player has the ability, false otherwise.
      */
     bool checkAbility(const xuid_t& xuid, const std::string& name) {
-        if (funcCheckAbility == nullptr) throw std::runtime_error("Function not found");
+        if (funcCheckAbility == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         return funcCheckAbility(xuid, name);
     }
 
@@ -177,7 +195,9 @@ public:
      * @return bool  True If the player is a member of the group, false otherwise.
      */
     bool isMemberOf(const xuid_t& xuid, const std::string& name) {
-        if (funcIsMemberOf == nullptr) throw std::runtime_error("Function not found");
+        if (funcIsMemberOf == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         return funcIsMemberOf(xuid, name);
     }
 
@@ -188,7 +208,9 @@ public:
      * @return PermGroups  The groups of the player.
      */
     PermGroups getPlayerGroups(const xuid_t& xuid) {
-        if (funcGetPlayerGroups == nullptr) throw std::runtime_error("Function not found");
+        if (funcGetPlayerGroups == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         PermGroups groups;
         funcGetPlayerGroups(xuid, groups);
         return groups;
@@ -201,7 +223,9 @@ public:
      * @return PermAbilities  The abilities of the player.
      */
     PermAbilities getPlayerAbilities(const xuid_t& xuid) {
-        if (funcGetPlayerAbilities == nullptr) throw std::runtime_error("Function not found");
+        if (funcGetPlayerAbilities == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         PermAbilities abilities;
         funcGetPlayerAbilities(xuid, abilities);
         return abilities;
@@ -211,7 +235,9 @@ public:
      * @brief Save the data.
      */
     void saveData() {
-        if (funcSaveData == nullptr) throw std::runtime_error("Function not found");
+        if (funcSaveData == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
         funcSaveData();
     }
 
