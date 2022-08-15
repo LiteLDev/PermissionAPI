@@ -10,7 +10,7 @@ class Mod {
     
 public:
 
-    Logger logger = Logger("PermAPI");
+    Logger logger;
     Permission perm;
 
     Mod();

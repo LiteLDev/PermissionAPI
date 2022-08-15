@@ -69,7 +69,7 @@ const I18nBase::LangData Mod::defaultLangData = {
 };
 
 Mod::Mod()
-    : logger(Logger("Perm")) {
+    : logger(Logger("PermAPI")) {
 }
 
 void Mod::entry() {

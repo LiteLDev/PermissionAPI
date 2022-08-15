@@ -473,7 +473,7 @@ class PermCommand : public Command {
                             break;
                         }
                         if (mod.perm.isMemberOf(pl->getXuid(), group->name)) {
-                            outp.trAddMessage("* " + group->displayName + " §r(§e" + pl->tr("Member") + "§r)");
+                            outp.trAddMessage("* " + group->displayName + " " + pl->tr("§r(§eMember§r)"));
                             continue;
                         }
                     }
@@ -526,7 +526,7 @@ class PermCommand : public Command {
                 }
                 auto& group = mod.perm.groups[this->name1];
                 outp.trAddMessage("§b§lGroup Info:");
-                outp.trAddMessage("+ §eName§r: {}", group->name);
+                outp.trAddMessage("+ §eName§r: {groupName}", group->name);
                 outp.trAddMessage("+ §eDisplayName§r: {}", group->displayName);
                 outp.trAddMessage("+ §ePriority§r: {}", std::to_string(group->priority));
                 if (group->getType() != PermGroup::Type::Everyone) {
@@ -544,7 +544,18 @@ class PermCommand : public Command {
                 } else {
                     outp.trAddMessage("+ §eAbilities§r:");
                     for (auto& ability : group->abilities) {
-                        outp.trAddMessage("  * " + ability.name + " " + (ability.enabled ? "§a(Enabled)§r" : "§c(Disabled)§r"));
+                        std::string suffix = (ability.enabled ? "§a(Enabled)§r" : "§c(Disabled)§r");
+                        if ((OriginType)ori.getOriginType() == OriginType::Player) {
+                            auto pl = ori.getPlayer();
+                            if (!pl) {
+                                outp.trError("Internal error. Please try again later.");
+                                break;
+                            }
+                            suffix = pl->tr(suffix);
+                        } else {
+                            suffix = tr(suffix);
+                        }
+                        outp.trAddMessage("  * " + ability.name + " " + suffix);
                     }
                 }
                 // Special cases
@@ -567,8 +578,8 @@ class PermCommand : public Command {
                 }
                 auto& ability = mod.perm.abilitiesInfo[this->name1];
                 outp.trAddMessage("§b§lAbility Info:");
-                outp.trAddMessage("+ Name: " + ability.name);
-                outp.trAddMessage("+ Description: " + ability.desc);
+                outp.trAddMessage("+ Name: {abilityName}", ability.name);
+                outp.trAddMessage("+ Description: {}", ability.desc);
                 return true;
             }
             // perm view player
@@ -647,7 +658,8 @@ class PermCommand : public Command {
                                 }
                                 group->addMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("Member {}({}) added.", this->name2, xid);
+                                // TODO: use fmt::arg
+                                outp.trSuccess("Member {name}({xuid}) added to Group {groupDisplayName}.", this->name2, xid, group->displayName);
                                 return true;
                             }
                             // perm update group remove member
@@ -663,7 +675,8 @@ class PermCommand : public Command {
                                 }
                                 group->removeMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("Member {}({}) removed.", this->name2, xid);
+                                // TODO: use fmt::arg
+                                outp.trSuccess("Member {name}({xuid}) removed from Group {groupDisplayName}.", this->name2, xid, group->displayName);
                                 return true;
                             }
                             default:
@@ -696,7 +709,7 @@ class PermCommand : public Command {
                                 }
                                 group->setAbility(this->name2, enabled_set ? this->enabled : true, extraJson);
                                 mod.perm.save();
-                                outp.trSuccess("Ability {} added.", this->name2);
+                                outp.trSuccess("Ability {name} added to Group {groupDisplayName}.", this->name2, group->displayName);
                                 return true;
                             }
                             // perm update group add ability
@@ -710,7 +723,7 @@ class PermCommand : public Command {
                                     break;
                                 }
                                 if (!this->enabled_set) {
-                                    outp.trError("Missing argument: enabled");
+                                    outp.trError("Missing argument: {}", "enabled");
                                     break;
                                 }
                                 nlohmann::json extraJson;
@@ -725,7 +738,8 @@ class PermCommand : public Command {
                                 }
                                 group->setAbility(this->name2, this->enabled, extraJson);
                                 mod.perm.save();
-                                outp.trSuccess("Ability {} set to {}.", this->name2, this->enabled ? "§aenabled" : "§cdisabled");
+                                // TODO: use fmt::arg
+                                outp.trSuccess("Ability {name} of Group {groupDisplayName} set to {enable}.", this->name2, group->displayName, this->enabled ? "§aenabled" : "§cdisabled");
                                 return true;
                             }
                             // perm update group remove ability
@@ -740,7 +754,7 @@ class PermCommand : public Command {
                                 }
                                 group->removeAbility(this->name2);
                                 mod.perm.save();
-                                outp.trSuccess("Ability {} removed.", this->name2);
+                                outp.trSuccess("Ability {name} removed from Group {groupDisplayName}.", this->name2, group->displayName);
                                 return true;
                             }
                             default:
@@ -756,12 +770,12 @@ class PermCommand : public Command {
                             break;
                         }
                         if (!this->priority_set) {
-                            outp.trError("Missing argument: priority");
+                            outp.trError("Missing argument: {}", "priority");
                             break;
                         }
                         group->priority = this->priority;
                         mod.perm.save();
-                        outp.trSuccess("Priority set to {}.", this->priority);
+                        outp.trSuccess("Priority of Group {groupDisplayName} set to {priority}.", group->displayName, this->priority);
                         return true;
                     }
                     // perm update group set display_name
@@ -771,12 +785,12 @@ class PermCommand : public Command {
                             break;
                         }
                         if (!this->displayName_set) {
-                            outp.trError("Missing argument: display_name");
+                            outp.trError("Missing argument: {}", "display_name");
                             break;
                         }
                         group->displayName = this->displayName;
                         mod.perm.save();
-                        outp.trSuccess("Display name set to {}.", this->displayName);
+                        outp.trSuccess("Display name of Group {groupName} set to {displayName}.", group->name, this->displayName);
                         return true;
                     }
                     default:
@@ -812,14 +826,14 @@ class PermCommand : public Command {
                             case Action::Add: {
                                 group->addMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("Member {}({}) added.", this->name1, xid);
+                                outp.trSuccess("Player {name}({xuid}) added to Group {groupDisplayName}.", this->name1, xid, group->displayName);
                                 return true;
                             }
                             // perm update player remove group
                             case Action::Remove: {
                                 group->removeMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("Member {}({}) removed.", this->name1, xid);
+                                outp.trSuccess("Player {name}({xuid}) removed from Group {groupDisplayName}.", this->name1, xid, group->displayName);
                                 return true;
                             }
                             default:
@@ -849,7 +863,6 @@ public:
                 outp.trError("Internal error. Please try again later.");
                 return;
             }
-            outp.addMessage("[DEBUG] Your language: " + pl->getLanguageCode());
             if (!checkPermission(pl->getXuid())) {
                 outp.trError("You don't have permission to use this command.");
                 return;
