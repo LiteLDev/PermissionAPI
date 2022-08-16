@@ -5,6 +5,7 @@
 #include "Mod.h"
 
 using namespace RegisterCommandHelper;
+using fmt::arg;
 
 /*
 /perm create group   <Name> [DisplayName] [Priority]
@@ -26,6 +27,14 @@ using namespace RegisterCommandHelper;
 /perm list   group
 /perm list   ability
 */
+
+bool DisplayNameIsSameAs(const std::string& name, std::string disp) {
+    size_t pos = 0;
+    while ((pos = disp.find("§")) != std::string::npos) {
+       disp.erase(pos, 3);
+    }
+    return disp == name;
+}
 
 class PermCommand : public Command {
 
@@ -73,11 +82,16 @@ class PermCommand : public Command {
         auto abilities = mod.perm.getPlayerAbilities(xuid);
         if (abilities.contains("PermissionAPI:cmd_control")) {
             auto& ab = abilities.at("PermissionAPI:cmd_control");
-            if (!ab.extra.is_object() || (ab.extra.is_object() && ab.extra.empty()))  
+            if (!ab.extra.is_object() || (ab.extra.is_object() && ab.extra.empty())) {
                 // Invalid extra data/No extra data
                 return true;
+            }
             switch (this->subcmd) {
-                case SubCommands::None: return true;
+                case SubCommands::None: {
+                    if (!ab.extra.contains("view_self")) return true;
+                    if (ab.extra.at("view_self").is_boolean()) return ab.extra.at("view_self"); 
+                    break;
+                }
                 case SubCommands::Create: {
                     if (!ab.extra.contains("create")) return true; // No more restrictions, pass
                     if (ab.extra.at("create").is_boolean()) return ab.extra.at("create"); 
@@ -201,6 +215,7 @@ class PermCommand : public Command {
                             }
                             break;
                     }
+                    break;
                 }
                 case SubCommands::Update: {
                     if (!ab.extra.contains("update")) return true; // No more restrictions, pass
@@ -357,20 +372,20 @@ class PermCommand : public Command {
         // perm
         if ((OriginType)ori.getOriginType() == OriginType::Player) {
             auto pl = ori.getPlayer();
-            outp.trAddMessage("§b§lYour current permission status:");
-            outp.trAddMessage("- §eGroups:");
+            outp.trAddMessage("permapi.cmd.output.view.player.yourStatus");
+            outp.trAddMessage("permapi.cmd.output.view.player.groupsTitle");
             for (auto& group : mod.perm.getPlayerGroups(pl->getXuid())) {
                 outp.trAddMessage("  * " + group->displayName);
             }
-            outp.trAddMessage("- §eAbilities:");
+            outp.trAddMessage("permapi.cmd.output.view.player.abilitiesTitle");
             for (auto& ability : mod.perm.getPlayerAbilities(pl->getXuid())) {
                 outp.addMessage("  * " + ability.name + ": " + 
                     (mod.perm.abilitiesInfo.contains(ability.name) ?
-                        mod.perm.abilitiesInfo[ability.name].desc : pl->tr("[No description]")));
+                        mod.perm.abilitiesInfo[ability.name].desc : pl->tr("permapi.cmd.output.noDesc")));
             }
             return true;
         } else {
-            outp.trError("Invalid command. Type '/help perm' to get help.");
+            outp.trError("permapi.cmd.error.invalidCommand");
         }
         return false;
     }
@@ -380,40 +395,40 @@ class PermCommand : public Command {
             // perm create group
             case TargetType::Group: {
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 if (mod.perm.groups.contains(this->name1)) {
-                    outp.trError("Group already exists.");
+                    outp.trError("permapi.cmd.error.groupAlreadyExists");
                     break;
                 }
                 auto group = mod.perm.createGroup(this->name1, this->name1);
                 if (this->priority_set) group->priority = this->priority;
                 if (this->displayName_set) group->displayName = this->displayName;
                 mod.perm.save();
-                outp.trSuccess("Group created.");
+                outp.trSuccess("permapi.cmd.output.create.group.success");
                 return true;
             }
             // perm create ability
             case TargetType::Ability:
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 if (mod.perm.abilitiesInfo.contains(this->name1)) {
-                    outp.trError("Ability already exists.");
+                    outp.trError("permapi.cmd.error.abilityAlreadyExists");
                     break;
                 }
                 if (!PermAbility::isValidAbilityName(this->name1)) {
-                    outp.trError("Invalid ability name.");
-                    outp.trError("Ability name examples: 'Namespace:AbilityName', 'a:b:c:d_e_f.g'");
+                    outp.trError("permapi.cmd.error.invalidAbilityName");
+                    outp.trError("permapi.cmd.output.abilityNameExamples");
                     break;
                 }
                 mod.perm.registerAbility(this->name1, this->desc);
-                outp.trSuccess("Ability created.");
+                outp.trSuccess("permapi.cmd.output.create.ability.success");
                 return true;
             default:
-                outp.trError("Invalid command. Type '/help perm' to get help.");
+                outp.trError("permapi.cmd.error.invalidCommand");
                 break;
         }
         return false;
@@ -424,33 +439,33 @@ class PermCommand : public Command {
             // perm delete group
             case TargetType::Group: {
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 if (!mod.perm.groups.contains(this->name1)) {
-                    outp.trError("Group does not exist.");
+                    outp.trError("permapi.cmd.error.groupNotFound");
                     break;
                 }
                 mod.perm.groups.remove(this->name1);
                 mod.perm.save();
-                outp.trSuccess("Group deleted.");
+                outp.trSuccess("permapi.cmd.output.delete.group.success");
                 return true;
             }
             // perm delete ability
             case TargetType::Ability:
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 if (!mod.perm.abilitiesInfo.contains(this->name1)) {
-                    outp.trError("Ability does not exist.");
+                    outp.trError("permapi.cmd.error.abilityNotFound");
                     break;
                 }
                 mod.perm.deleteAbility(this->name1);
-                outp.trSuccess("Ability deleted.");
+                outp.trSuccess("permapi.cmd.output.delete.ability.success");
                 return true;
             default:
-                outp.trError("Invalid command. Type '/help perm' to get help.");
+                outp.trError("permapi.cmd.error.invalidCommand");
                 break;
         }
         return false;
@@ -461,52 +476,57 @@ class PermCommand : public Command {
             // perm list group
             case TargetType::Group: {
                 if (mod.perm.groups.empty()) {
-                    outp.trSuccess("No groups.");
+                    outp.trSuccess("permapi.cmd.output.list.group.none");
                     return true;
                 }
-                outp.trAddMessage("§b§lGroup List:");
+                outp.trAddMessage("permapi.cmd.output.list.group.header");
                 for (auto& group : mod.perm.groups) {
+                    std::string msg = "* " + group->displayName;
+                    if (!DisplayNameIsSameAs(group->name, group->displayName)) {
+                        // If the display name is different from name, append the name
+                        msg += " <" + group->name + ">";
+                    }
                     if ((OriginType)ori.getOriginType() == OriginType::Player) {
                         auto pl = ori.getPlayer();
                         if (!pl) {
-                            outp.trError("Internal error. Please try again later.");
+                            outp.trError("permapi.cmd.error.internal");
                             break;
                         }
                         if (mod.perm.isMemberOf(pl->getXuid(), group->name)) {
-                            outp.trAddMessage("* " + group->displayName + " " + pl->tr("§r(§eMember§r)"));
+                            outp.trAddMessage(msg + " " + pl->tr("permapi.cmd.output.list.group.isMember"));
                             continue;
                         }
                     }
-                    outp.trAddMessage("* " + group->displayName);
+                    outp.trAddMessage(msg);
                 }
                 return true;
             }
             // perm list ability
             case TargetType::Ability:
                 if (mod.perm.abilitiesInfo.empty()) {
-                    outp.trSuccess("No abilities.");
+                    outp.trSuccess("permapi.cmd.output.list.ability.none");
                     return true;
                 }
-                outp.trAddMessage("§b§lAbility List:");
+                outp.trAddMessage("permapi.cmd.output.list.ability.header");
                 for (auto& ability : mod.perm.abilitiesInfo) {
                     if (ability.desc.empty()) {
                         if ((OriginType)ori.getOriginType() == OriginType::Player) {
                             auto pl = ori.getPlayer();
                             if (!pl) {
-                                outp.trError("Internal error. Please try again later.");
+                                outp.trError("permapi.cmd.error.internal");
                                 break;
                             }  
-                            outp.trAddMessage("* " + ability.name + ": " + pl->tr("[No description]"));
+                            outp.trAddMessage("* " + ability.name + ": " + pl->tr("permapi.cmd.output.noDesc"));
                             continue;
                         }
-                        outp.trAddMessage("* " + ability.name + ": " + tr("[No description]"));
+                        outp.trAddMessage("* " + ability.name + ": " + tr("permapi.cmd.output.noDesc"));
                         continue;
                     }
                     outp.trAddMessage("* " + ability.name + ": " + ability.desc);
                 }
                 return true;
             default:
-                outp.trError("Invalid command. Type '/help perm' to get help.");
+                outp.trError("permapi.cmd.error.invalidCommand");
                 break;
         }
         return false;
@@ -517,38 +537,44 @@ class PermCommand : public Command {
             // perm view group
             case TargetType::Group: {
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 if (!mod.perm.groups.contains(this->name1)) {
-                    outp.trError("Group does not exist.");
+                    outp.trError("permapi.cmd.error.groupNotFound");
                     break;
                 }
                 auto& group = mod.perm.groups[this->name1];
-                outp.trAddMessage("§b§lGroup Info:");
-                outp.trAddMessage("+ §eName§r: {groupName}", group->name);
-                outp.trAddMessage("+ §eDisplayName§r: {}", group->displayName);
-                outp.trAddMessage("+ §ePriority§r: {}", std::to_string(group->priority));
+                outp.trAddMessage("permapi.cmd.output.view.group.header");
+                outp.trAddMessage("permapi.cmd.output.view.group.info.name",
+                                  arg("groupName", group->name));
+                outp.trAddMessage("permapi.cmd.output.view.group.info.displayName", group->displayName);
+                outp.trAddMessage("permapi.cmd.output.view.group.info.priority", std::to_string(group->priority));
                 if (group->getType() != PermGroup::Type::Everyone) {
                     if (group->members.empty()) {
-                        outp.trAddMessage("+ §eMembers§r: None");
+                        outp.trAddMessage("permapi.cmd.output.view.group.info.membersNone");
                     } else {
-                        outp.trAddMessage("+ §eMembers§r:");
+                        outp.trAddMessage("permapi.cmd.output.view.group.info.members");
                         for (auto& xid : group->members) {
                             outp.trAddMessage("  * " + PlayerInfo::fromXuid(xid) + " (" + xid + ")");
                         }
                     }
                 }
                 if (group->abilities.empty()) {
-                    outp.trAddMessage("+ §eAbilities§r: None");
+                    outp.trAddMessage("permapi.cmd.output.view.group.info.abilitiesNone");
                 } else {
-                    outp.trAddMessage("+ §eAbilities§r:");
+                    outp.trAddMessage("permapi.cmd.output.view.group.info.abilities");
                     for (auto& ability : group->abilities) {
-                        std::string suffix = (ability.enabled ? "§a(Enabled)§r" : "§c(Disabled)§r");
+                        std::string suffix = (ability.enabled ? 
+                            "permapi.cmd.output.view.group.enabled" :
+                            "permapi.cmd.output.view.group.disabled");
+                        if (ability.enabled && ability.extra.is_object() && !ability.extra.empty()) {
+                            suffix = "permapi.cmd.output.view.group.enabledWithExtra";
+                        }
                         if ((OriginType)ori.getOriginType() == OriginType::Player) {
                             auto pl = ori.getPlayer();
                             if (!pl) {
-                                outp.trError("Internal error. Please try again later.");
+                                outp.trError("permapi.cmd.error.internal");
                                 break;
                             }
                             suffix = pl->tr(suffix);
@@ -560,65 +586,66 @@ class PermCommand : public Command {
                 }
                 // Special cases
                 if (group->getType() == PermGroup::Type::Admin) {
-                    outp.trAddMessage("※ {}§r is a special group. All the abilities will be enabled by default unless it has been disabled in the config.", group->displayName);
+                    outp.trAddMessage("permapi.cmd.output.view.group.note.admin", group->displayName);
                 } else if (group->getType() == PermGroup::Type::Everyone) {
-                    outp.trAddMessage("※ {}§r is a special group. All players are members of this group.", group->displayName);
+                    outp.trAddMessage("permapi.cmd.output.view.group.note.everyone", group->displayName);
                 }
                 return true;
             }
             // perm view ability
             case TargetType::Ability: {
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 if (!mod.perm.abilitiesInfo.contains(this->name1)) {
-                    outp.trError("Ability does not exist.");
+                    outp.trError("permapi.cmd.error.abilityNotFound");
                     break;
                 }
                 auto& ability = mod.perm.abilitiesInfo[this->name1];
-                outp.trAddMessage("§b§lAbility Info:");
-                outp.trAddMessage("+ Name: {abilityName}", ability.name);
-                outp.trAddMessage("+ Description: {}", ability.desc);
+                outp.trAddMessage("permapi.cmd.output.view.ability.header");
+                outp.trAddMessage("permapi.cmd.output.view.ability.info.name",
+                                  arg("abilityName", ability.name));
+                outp.trAddMessage("permapi.cmd.output.view.ability.info.desc", ability.desc);
                 return true;
             }
             // perm view player
             case TargetType::Player: {
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 auto target = PlayerInfo::getXuid(this->name1);
                 if (target.empty()) {
-                    outp.trError("Player not found.");
+                    outp.trError("permapi.cmd.error.playerNotFound");
                     break;
                 }
-                outp.trAddMessage("§b§l{}'s current permission status:", this->name1);
-                outp.trAddMessage("- §eGroups:");
+                outp.trAddMessage("permapi.cmd.output.view.player.status", this->name1);
+                outp.trAddMessage("permapi.cmd.output.view.player.groupsTitle");
                 for (auto& group : mod.perm.getPlayerGroups(target)) {
                     outp.trAddMessage("  * " + group->displayName);
                 }
-                outp.trAddMessage("- §eAbilities:");
+                outp.trAddMessage("permapi.cmd.output.view.player.abilitiesTitle");
                 for (auto& ability : mod.perm.getPlayerAbilities(target)) {
                     if ((OriginType)ori.getOriginType() == OriginType::Player) {
                         auto pl = ori.getPlayer();
                         if (!pl) {
-                            outp.trError("Internal error. Please try again later.");
+                            outp.trError("permapi.cmd.error.internal");
                             break;
                         }
                         outp.addMessage("  * " + ability.name + ": " + 
                             (mod.perm.abilitiesInfo.contains(ability.name) ?
-                                mod.perm.abilitiesInfo[ability.name].desc : pl->tr("[No description]")));
+                                mod.perm.abilitiesInfo[ability.name].desc : pl->tr("permapi.cmd.output.noDesc")));
                         continue;
                     }
                     outp.addMessage("  * " + ability.name + ": " + 
                         (mod.perm.abilitiesInfo.contains(ability.name) ?
-                            mod.perm.abilitiesInfo[ability.name].desc : tr("[No description]")));
+                            mod.perm.abilitiesInfo[ability.name].desc : tr("permapi.cmd.output.noDesc")));
                 }
                 return true;
             }
             default:
-                outp.trError("Invalid command. Type '/help perm' to get help.");
+                outp.trError("permapi.cmd.error.invalidCommand");
                 break;
         }
         return false;
@@ -629,11 +656,11 @@ class PermCommand : public Command {
             // perm update group
             case TargetType::Group: {
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 if (!mod.perm.groups.contains(this->name1)) {
-                    outp.trError("Group does not exist.");
+                    outp.trError("permapi.cmd.error.groupNotFound");
                     break;
                 }
                 auto& group = mod.perm.groups[this->name1];
@@ -641,46 +668,50 @@ class PermCommand : public Command {
                     // perm update group ... member    
                     case TargetType::Member: {
                         if (group->getType() == PermGroup::Type::Everyone) {
-                            outp.trError("The group is a everyone group. You cannot modify the members of it.");
+                            outp.trError("permapi.cmd.error.modifyMembersOfEveryone");
                             return false;
                         }
                         switch (this->action) {
                             // perm update group add member
                             case Action::Add: {
                                 if (this->name2.empty()) {
-                                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                                    outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
                                 auto xid = PlayerInfo::getXuid(this->name2);
                                 if (xid.empty()) {
-                                    outp.trError("Player not found.");
+                                    outp.trError("permapi.cmd.error.playerNotFound");
                                     return false;     
                                 }
                                 group->addMember(xid);
                                 mod.perm.save();
-                                // TODO: use fmt::arg
-                                outp.trSuccess("Member {name}({xuid}) added to Group {groupDisplayName}.", this->name2, xid, group->displayName);
+                                outp.trSuccess("permapi.cmd.output.update.group.member.add.success",
+                                               arg("name", this->name2),
+                                               arg("xuid", xid),
+                                               arg("groupDisplayName", group->displayName));
                                 return true;
                             }
                             // perm update group remove member
                             case Action::Remove: {
                                 if (this->name2.empty()) {
-                                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                                    outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
                                 auto xid = PlayerInfo::getXuid(this->name2);
                                 if (xid.empty()) {
-                                    outp.trError("Player not found.");
+                                    outp.trError("permapi.cmd.error.playerNotFound");
                                     return false;
                                 }
                                 group->removeMember(xid);
                                 mod.perm.save();
-                                // TODO: use fmt::arg
-                                outp.trSuccess("Member {name}({xuid}) removed from Group {groupDisplayName}.", this->name2, xid, group->displayName);
+                                outp.trSuccess("permapi.cmd.output.update.group.member.remove.success",
+                                               arg("name", this->name2),
+                                               arg("xuid", xid),
+                                               arg("groupDisplayName", group->displayName));
                                 return true;
                             }
                             default:
-                                outp.trError("Invalid command. Type '/help perm' to get help.");
+                                outp.trError("permapi.cmd.error.invalidCommand");
                                 break;
                         }
                         break;
@@ -691,11 +722,11 @@ class PermCommand : public Command {
                             // perm update group add ability
                             case Action::Add: {
                                 if (this->name2.empty()) {
-                                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                                    outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
                                 if (!mod.perm.abilitiesInfo.contains(this->name2)) {
-                                    outp.trError("Ability does not exist.");
+                                    outp.trError("permapi.cmd.error.abilityNotFound");
                                     break;
                                 }
                                 nlohmann::json extraJson;
@@ -703,27 +734,29 @@ class PermCommand : public Command {
                                     try {
                                         extraJson = nlohmann::json::parse(this->extra.getText());
                                     } catch (const std::exception& e) {
-                                        outp.trError("JSON parsing error: {}", e.what());
+                                        outp.trError("permapi.cmd.error.jsonParsingError", e.what());
                                         return false;
                                     }
                                 }
                                 group->setAbility(this->name2, enabled_set ? this->enabled : true, extraJson);
                                 mod.perm.save();
-                                outp.trSuccess("Ability {name} added to Group {groupDisplayName}.", this->name2, group->displayName);
+                                outp.trSuccess("permapi.cmd.output.update.group.ability.add.success",
+                                               arg("name", this->name2),
+                                               arg("groupDisplayName", group->displayName));
                                 return true;
                             }
                             // perm update group add ability
                             case Action::Set: {
                                 if (this->name2.empty()) {
-                                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                                    outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
                                 if (!mod.perm.abilitiesInfo.contains(this->name2)) {
-                                    outp.trError("Ability does not exist.");
+                                    outp.trError("permapi.cmd.error.abilityNotFound");
                                     break;
                                 }
                                 if (!this->enabled_set) {
-                                    outp.trError("Missing argument: {}", "enabled");
+                                    outp.trError("permapi.cmd.error.missingArgument", "enabled");
                                     break;
                                 }
                                 nlohmann::json extraJson;
@@ -732,33 +765,50 @@ class PermCommand : public Command {
                                         extraJson = nlohmann::json::parse(this->extra.getText());
                                     }
                                     catch (const std::exception& e) {
-                                        outp.trError("JSON parsing error: {}", e.what());
+                                        outp.trError("permapi.cmd.error.jsonParsingError", e.what());
                                         return false;
                                     }
                                 }
                                 group->setAbility(this->name2, this->enabled, extraJson);
                                 mod.perm.save();
-                                // TODO: use fmt::arg
-                                outp.trSuccess("Ability {name} of Group {groupDisplayName} set to {enable}.", this->name2, group->displayName, this->enabled ? "§aenabled" : "§cdisabled");
+                                std::string suffix = (this->enabled ? 
+                                    "permapi.cmd.output.update.group.ability.set.enabled" :
+                                    "permapi.cmd.output.update.group.ability.set.disabled");
+                                if ((OriginType)ori.getOriginType() == OriginType::Player) {
+                                    auto pl = ori.getPlayer();
+                                    if (!pl) {
+                                        outp.trError("permapi.cmd.error.internal");
+                                        break;
+                                    }
+                                    suffix = pl->tr(suffix);
+                                } else {
+                                    suffix = tr(suffix);
+                                }
+                                outp.trSuccess("permapi.cmd.output.update.group.ability.set.success",
+                                               arg("name", this->name2),
+                                               arg("groupDisplayName", group->displayName),
+                                               arg("enable", suffix));
                                 return true;
                             }
                             // perm update group remove ability
                             case Action::Remove: {
                                 if (this->name2.empty()) {
-                                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                                    outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
                                 if (!mod.perm.abilitiesInfo.contains(this->name2)) {
-                                    outp.trError("Ability does not exist.");
+                                    outp.trError("permapi.cmd.error.abilityNotFound");
                                     break;
                                 }
                                 group->removeAbility(this->name2);
                                 mod.perm.save();
-                                outp.trSuccess("Ability {name} removed from Group {groupDisplayName}.", this->name2, group->displayName);
+                                outp.trSuccess("permapi.cmd.output.update.group.ability.remove.success",
+                                               arg("name", this->name2),
+                                               arg("groupDisplayName", group->displayName));
                                 return true;
                             }
                             default:
-                                outp.trError("Invalid command. Type '/help perm' to get help.");
+                                outp.trError("permapi.cmd.error.invalidCommand");
                                 break;
                         }
                         break;
@@ -766,35 +816,39 @@ class PermCommand : public Command {
                     // perm update group set priority
                     case TargetType::Priority: {
                         if (this->action != Action::Set) {
-                            outp.trError("Invalid command. Type '/help perm' to get help.");
+                            outp.trError("permapi.cmd.error.invalidCommand");
                             break;
                         }
                         if (!this->priority_set) {
-                            outp.trError("Missing argument: {}", "priority");
+                            outp.trError("permapi.cmd.error.missingArgument", "priority");
                             break;
                         }
                         group->priority = this->priority;
                         mod.perm.save();
-                        outp.trSuccess("Priority of Group {groupDisplayName} set to {priority}.", group->displayName, this->priority);
+                        outp.trSuccess("permapi.cmd.output.update.group.priority.set.success",
+                                       arg("groupDisplayName", group->displayName),
+                                       arg("priority", this->priority));
                         return true;
                     }
                     // perm update group set display_name
                     case TargetType::DisplayName: {
                         if (this->action != Action::Set) {
-                            outp.trError("Invalid command. Type '/help perm' to get help.");
+                            outp.trError("permapi.cmd.error.invalidCommand");
                             break;
                         }
                         if (!this->displayName_set) {
-                            outp.trError("Missing argument: {}", "display_name");
+                            outp.trError("permapi.cmd.error.missingArgument", "display_name");
                             break;
                         }
                         group->displayName = this->displayName;
                         mod.perm.save();
-                        outp.trSuccess("Display name of Group {groupName} set to {displayName}.", group->name, this->displayName);
+                        outp.trSuccess("permapi.cmd.output.update.group.displayName.set.success",
+                                       arg("groupName", group->name),
+                                       arg("displayName", this->displayName));
                         return true;
                     }
                     default:
-                        outp.trError("Invalid command. Type '/help perm' to get help.");
+                        outp.trError("permapi.cmd.error.invalidCommand");
                         break;
                 }
                 break;
@@ -802,22 +856,22 @@ class PermCommand : public Command {
             // perm update player
             case TargetType::Player: {
                 if (this->name1.empty()) {
-                    outp.trError("Invalid command. Type '/help perm' to get help.");
+                    outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
                 auto xid = PlayerInfo::getXuid(this->name1);
                 if (xid.empty()) {
-                    outp.trError("Player not found.");
+                    outp.trError("permapi.cmd.error.playerNotFound");
                     return false;
                 }
                 switch (this->targetType2) {
                     case TargetType::Group: {
                         if (this->name2.empty()) {
-                            outp.trError("Invalid command. Type '/help perm' to get help.");
+                            outp.trError("permapi.cmd.error.invalidCommand");
                             break;
                         }
                         if (!mod.perm.groups.contains(this->name2)) {
-                            outp.trError("Group does not exist.");
+                            outp.trError("permapi.cmd.error.groupNotFound");
                             break;
                         }
                         auto& group = mod.perm.groups[this->name2];
@@ -826,24 +880,30 @@ class PermCommand : public Command {
                             case Action::Add: {
                                 group->addMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("Player {name}({xuid}) added to Group {groupDisplayName}.", this->name1, xid, group->displayName);
+                                outp.trSuccess("permapi.cmd.output.update.player.group.add.success",
+                                               arg("name", this->name1),
+                                               arg("xuid", xid),
+                                               arg("groupDisplayName", group->displayName));
                                 return true;
                             }
                             // perm update player remove group
                             case Action::Remove: {
                                 group->removeMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("Player {name}({xuid}) removed from Group {groupDisplayName}.", this->name1, xid, group->displayName);
+                                outp.trSuccess("permapi.cmd.output.update.player.group.remove.success",
+                                               arg("name", this->name1),
+                                               arg("xuid", xid),
+                                               arg("groupDisplayName", group->displayName));
                                 return true;
                             }
                             default:
-                                outp.trError("Invalid command. Type '/help perm' to get help.");
+                                outp.trError("permapi.cmd.error.invalidCommand");
                                 break;
                         }
                         break;
                     }
                     default:
-                        outp.trError("Invalid command. Type '/help perm' to get help.");
+                        outp.trError("permapi.cmd.error.invalidCommand");
                         break;
                 }
                 break;
@@ -855,45 +915,59 @@ class PermCommand : public Command {
 public:
 
     void execute(CommandOrigin const& ori, CommandOutput& outp) const {
-        outp.setLanguageCode(ori);
-        auto oriType = (OriginType)ori.getOriginType();
-        if (oriType == OriginType::Player) {
-            auto pl = ori.getPlayer();
-            if (!pl) {
-                outp.trError("Internal error. Please try again later.");
-                return;
+        try {
+            outp.setLanguageCode(ori);
+            auto oriType = (OriginType)ori.getOriginType();
+            if (oriType == OriginType::Player) {
+                auto pl = ori.getPlayer();
+                if (!pl) {
+                    outp.trError("permapi.cmd.error.internal");
+                    return;
+                }
+                if (!checkPermission(pl->getXuid())) {
+                    outp.trError("permapi.cmd.error.permissionDenied");
+                    return;
+                }
             }
-            if (!checkPermission(pl->getXuid())) {
-                outp.trError("You don't have permission to use this command.");
-                return;
+            bool success = false;
+            switch (this->subcmd) {
+                case SubCommands::None:
+                    success = this->handleNone(ori, outp);
+                    break;
+                case SubCommands::Create:
+                    success = this->handleCreate(ori, outp);
+                    break;
+                case SubCommands::Delete:
+                    success = this->handleDelete(ori, outp);
+                    break;
+                case SubCommands::List:
+                    success = this->handleList(ori, outp);
+                    break;
+                case SubCommands::View:
+                    success = this->handleView(ori, outp);
+                    break;
+                case SubCommands::Update:
+                    success = this->handleUpdate(ori, outp);
+                    break;
+            }
+            if (success) {
+                outp.success();
+            }
+        } catch (const std::exception& e) {
+            auto oriType = (OriginType)ori.getOriginType();
+            if (oriType == OriginType::Player) {
+                outp.trError("permapi.cmd.error.internal");
+            } else {
+                outp.trError("permapi.cmd.error.internal");
+                outp.trError(e.what());
             }
         }
-        bool success = false;
-        switch (this->subcmd) {
-            case SubCommands::None:
-                success = this->handleNone(ori, outp);
-                break;
-            case SubCommands::Create:
-                success = this->handleCreate(ori, outp);
-                break;
-            case SubCommands::Delete:
-                success = this->handleDelete(ori, outp);
-                break;
-            case SubCommands::List:
-                success = this->handleList(ori, outp);
-                break;
-            case SubCommands::View:
-                success = this->handleView(ori, outp);
-                break;
-            case SubCommands::Update:
-                success = this->handleUpdate(ori, outp);
-                break;
-        }
-        if (success) outp.success();
     }
 
     static void setup(CommandRegistry* reg) {
-        if (reg == nullptr) return;
+        if (reg == nullptr) {
+            return;
+        }
         reg->registerCommand("perm", "Permission group system",
                              CommandPermissionLevel::Any,
                              {CommandFlagValue::None},

@@ -74,7 +74,7 @@ Mod::Mod()
 
 void Mod::entry() {
     logger.info("PermissionAPI v{} loaded! Author: Jasonzyt", PERM_VER.toString(true));
-    auto i18n = Translation::load(LANG_FILE, "en_US", Mod::defaultLangData);
+    auto i18n = Translation::loadFromImpl(GetCurrentModule(), LL::getLoaderHandle());
     perm.load();
     // Register plugin permissions
     if (!perm.abilitiesInfo.contains("PermissionAPI:cmd_control")) {
@@ -128,14 +128,6 @@ void Mod::entry() {
         perm.registerAbility("PermissionAPI:cmd_control", "Access to /perm commands");
     }
     // Events
-    Event::ServerStartedEvent::subscribe([&](const Event::ServerStartedEvent& ev) { 
-        auto lang = I18n::getCurrentLanguage().get()->getFullLanguageCode();
-        logger.debug("Switch language: {}", lang);
-        if (!i18n) {
-            i18n->defaultLocaleName = lang;
-        }
-        return true;
-    });
     Event::RegCmdEvent::subscribe([&](const Event::RegCmdEvent& ev) {
         SetupAllCmds(ev.mCommandRegistry);
         return true;

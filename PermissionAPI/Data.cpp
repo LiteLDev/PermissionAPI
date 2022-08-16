@@ -56,10 +56,10 @@ void Permission::load() {
             j["groups"].get_to(this->groups);
             this->validateData();
         } catch (const std::exception& e) {
-            logger.error(tr("Failed to process the data file: {}", e.what()));
+            logger.error(tr("permapi.data.process.fail", e.what()));
         }
     } else {
-        logger.error(tr("Failed to read the data file at {}", DATA_FILE));
+        logger.error(tr("permapi.data.read.fail", DATA_FILE));
         return;
     }
 }
@@ -73,7 +73,7 @@ void Permission::save() {
         };
         WriteAllFile(DATA_FILE, j.dump(4));
     } catch (const std::exception& e) {
-        logger.error(tr("Failed to save the data file: {}", e.what()));
+        logger.error(tr("permapi.data.save.fail", e.what()));
     }
 }
 
