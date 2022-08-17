@@ -67,7 +67,7 @@ BEGIN
     BEGIN
         BLOCK "080404b0"
         BEGIN
-            VALUE "FileDescription", "Permission group plugin based on LiteLoaderBDS for MCBDS"
+            VALUE "FileDescription", "Permission API plugin based on LiteLoaderBDS for MCBDS"
             VALUE "FileVersion", "0.1.0.0"
             VALUE "InternalName", "PermissionAPI.dll"
             VALUE "LegalCopyright", "Copyright (C) 2022  Jasonzyt and LiteLoaderBDS Dev Team. All rights reserved."

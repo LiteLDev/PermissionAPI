@@ -16,7 +16,5 @@ public:
     Mod();
     void entry();
 
-    static const I18nBase::LangData defaultLangData;
-
 };
 extern Mod mod;

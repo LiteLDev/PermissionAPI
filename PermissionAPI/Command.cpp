@@ -5,27 +5,28 @@
 #include "Mod.h"
 
 using namespace RegisterCommandHelper;
+using namespace PERM;
 using fmt::arg;
 
 /*
-/perm create group   <Name> [DisplayName] [Priority]
-/perm delete group   <Name>
-/perm create ability <Name> [Desc]
-/perm delete ability <Name>
-/perm update group   <Name> add member   <RealName>
-/perm update group   <Name> rm  member   <RealName>
-/perm update group   <Name> add ability  <AbName> [Enabled] [ExtraJson(as RawText)]
-/perm update group   <Name> set ability  <AbName> <Enabled> [ExtraJson(as RawText)]
-/perm update group   <Name> rm  ability  <AbName>
-/perm update group   <Name> set priority <Priority>
-/perm update group   <Name> set display_name  <DisplayName>
-/perm update player  <Name> add group    <GroupName>
-/perm update player  <Name> rm  group    <GroupName>
-/perm view   player  <Name>
-/perm view   group   <Name>
-/perm view   ability <Name>
-/perm list   group
-/perm list   ability
+/perm create role   <Name> [DisplayName] [Priority]
+/perm delete role   <Name>
+/perm create perm   <Name> [Desc]
+/perm delete perm   <Name>
+/perm update role   <Name> add member   <RealName>
+/perm update role   <Name> rm  member   <RealName>
+/perm update role   <Name> add perm     <PermName> [Enabled] [ExtraJson(as RawText)]
+/perm update role   <Name> set perm     <PermName> <Enabled> [ExtraJson(as RawText)]
+/perm update role   <Name> rm  perm     <PermName>
+/perm update role   <Name> set priority <Priority>
+/perm update role   <Name> set display_name  <DisplayName>
+/perm update player <Name> add role     <RoleName>
+/perm update player <Name> rm  role     <RoleName>
+/perm view   player <Name>
+/perm view   role   <Name>
+/perm view   perm   <Name>
+/perm list   role
+/perm list   perm
 */
 
 bool DisplayNameIsSameAs(const std::string& name, std::string disp) {
@@ -54,8 +55,8 @@ class PermCommand : public Command {
     } action = Action::None;
     enum class TargetType : char {
         None = -1,
-        Group,
-        Ability,
+        Role,
+        Permission,
         Player,
         Priority,
         Member,
@@ -79,9 +80,9 @@ class PermCommand : public Command {
     bool desc_set = false;
 
     bool checkPermission(const xuid_t& xuid) const {
-        auto abilities = mod.perm.getPlayerAbilities(xuid);
-        if (abilities.contains("PermissionAPI:cmd_control")) {
-            auto& ab = abilities.at("PermissionAPI:cmd_control");
+        auto permissions = mod.perm.getPlayerPermissions(xuid);
+        if (permissions.contains("PermissionAPI:cmd_control")) {
+            auto& ab = permissions.at("PermissionAPI:cmd_control");
             if (!ab.extra.is_object() || (ab.extra.is_object() && ab.extra.empty())) {
                 // Invalid extra data/No extra data
                 return true;
@@ -97,15 +98,15 @@ class PermCommand : public Command {
                     if (ab.extra.at("create").is_boolean()) return ab.extra.at("create"); 
                     auto& obj = ab.extra["create"];
                     switch (this->targetType1) {
-                        case TargetType::Group:
-                            if (!obj.contains("group")) return true; // Default pass
-                            if (obj["group"].is_boolean() && obj["group"] == true) return true; // Boolean value is true, pass
-                            if (obj["group"].is_object() && obj["group"].contains("enabled") && obj["groups"]["enabled"] == true) return true; // Object value
+                        case TargetType::Role:
+                            if (!obj.contains("role")) return true; // Default pass
+                            if (obj["role"].is_boolean() && obj["role"] == true) return true; // Boolean value is true, pass
+                            if (obj["role"].is_object() && obj["role"].contains("enabled") && obj["roles"]["enabled"] == true) return true; // Object value
                             break;
-                        case TargetType::Ability:
-                            if (!obj.contains("ability")) return true; // Default pass
-                            if (obj["ability"].is_boolean() && obj["ability"] == true) return true; // Boolean value is true, pass
-                            if (obj["ability"].is_object() && obj["ability"].contains("enabled") && obj["abilities"]["enabled"] == true) return true; // Object value
+                        case TargetType::Permission:
+                            if (!obj.contains("perm")) return true; // Default pass
+                            if (obj["perm"].is_boolean() && obj["perm"] == true) return true; // Boolean value is true, pass
+                            if (obj["perm"].is_object() && obj["perm"].contains("enabled") && obj["perm"]["enabled"] == true) return true; // Object value
                             break;
                     }
                     break;
@@ -115,15 +116,15 @@ class PermCommand : public Command {
                     if (ab.extra["delete"].is_boolean()) return ab.extra["delete"].get<bool>();
                     auto& obj = ab.extra["delete"];
                     switch (this->targetType1) {
-                        case TargetType::Group:
-                            if (!obj.contains("group")) return true; // Default pass
-                            if (obj["group"].is_boolean() && obj["group"] == true) return true; // Boolean value is true, pass
-                            if (obj["group"].is_object() && obj["group"].contains("enabled") && obj["groups"]["enabled"] == true) return true; // Object value
+                        case TargetType::Role:
+                            if (!obj.contains("role")) return true; // Default pass
+                            if (obj["role"].is_boolean() && obj["role"] == true) return true; // Boolean value is true, pass
+                            if (obj["role"].is_object() && obj["role"].contains("enabled") && obj["roles"]["enabled"] == true) return true; // Object value
                             break;
-                        case TargetType::Ability:
-                            if (!obj.contains("ability")) return true; // Default pass
-                            if (obj["ability"].is_boolean() && obj["ability"] == true) return true; // Boolean value is true, pass
-                            if (obj["ability"].is_object() && obj["ability"].contains("enabled") && obj["abilities"]["enabled"] == true) return true; // Object value
+                        case TargetType::Permission:
+                            if (!obj.contains("perm")) return true; // Default pass
+                            if (obj["perm"].is_boolean() && obj["perm"] == true) return true; // Boolean value is true, pass
+                            if (obj["perm"].is_object() && obj["perm"].contains("enabled") && obj["perm"]["enabled"] == true) return true; // Object value
                             break;
                     }
                     break;
@@ -133,15 +134,15 @@ class PermCommand : public Command {
                     if (ab.extra["list"].is_boolean()) return ab.extra["list"].get<bool>();
                     auto& obj = ab.extra["list"];
                     switch (this->targetType1) {
-                        case TargetType::Group:
-                            if (!obj.contains("group")) return true; // Default pass
-                            if (obj["group"].is_boolean() && obj["group"] == true) return true; // Boolean value is true, pass
-                            if (obj["group"].is_object() && obj["group"].contains("enabled") && obj["groups"]["enabled"] == true) return true; // Object value
+                        case TargetType::Role:
+                            if (!obj.contains("role")) return true; // Default pass
+                            if (obj["role"].is_boolean() && obj["role"] == true) return true; // Boolean value is true, pass
+                            if (obj["role"].is_object() && obj["role"].contains("enabled") && obj["roles"]["enabled"] == true) return true; // Object value
                             break;
-                        case TargetType::Ability:
-                            if (!obj.contains("ability")) return true; // Default pass
-                            if (obj["ability"].is_boolean() && obj["ability"] == true) return true; // Boolean value is true, pass
-                            if (obj["ability"].is_object() && obj["ability"].contains("enabled") && obj["abilities"]["enabled"] == true) return true; // Object value
+                        case TargetType::Permission:
+                            if (!obj.contains("perm")) return true; // Default pass
+                            if (obj["perm"].is_boolean() && obj["perm"] == true) return true; // Boolean value is true, pass
+                            if (obj["perm"].is_object() && obj["perm"].contains("enabled") && obj["perm"]["enabled"] == true) return true; // Object value
                             break;
                     }
                     break;
@@ -151,19 +152,19 @@ class PermCommand : public Command {
                     if (ab.extra["view"].is_boolean()) return ab.extra["view"].get<bool>();
                     auto& obj = ab.extra["view"];
                     switch (this->targetType1) {
-                        case TargetType::Group:
-                            if (!obj.contains("group")) return true; // Default pass
-                            if (obj["group"].is_boolean() && obj["group"] == true) return true; // Boolean value is true, pass
-                            if (obj["group"].is_object() && obj["group"].contains("enabled") && obj["groups"]["enabled"] == true) {
-                                if (obj["group"].contains("only")) {
-                                    auto v = obj["group"]["only"];
+                        case TargetType::Role:
+                            if (!obj.contains("role")) return true; // Default pass
+                            if (obj["role"].is_boolean() && obj["role"] == true) return true; // Boolean value is true, pass
+                            if (obj["role"].is_object() && obj["role"].contains("enabled") && obj["roles"]["enabled"] == true) {
+                                if (obj["role"].contains("only")) {
+                                    auto v = obj["role"]["only"];
                                     if (v.is_array()) {
                                         for (auto& s : v) {
                                             if (s.is_string() && s == this->name1) return true;
                                         }
                                     }
-                                } else if (obj["group"].contains("except")) {
-                                    auto v = obj["group"]["except"];
+                                } else if (obj["role"].contains("except")) {
+                                    auto v = obj["role"]["except"];
                                     if (v.is_array()) {
                                         for (auto& s : v) {
                                             if (s.is_string() && s == this->name1) return false;
@@ -174,19 +175,19 @@ class PermCommand : public Command {
                                 return true;
                             }
                             break;
-                        case TargetType::Ability:
-                            if (!obj.contains("ability")) return true; // Default pass
-                            if (obj["ability"].is_boolean() && obj["ability"] == true) return true; // Boolean value is true, pass
-                            if (obj["ability"].is_object() && obj["ability"].contains("enabled") && obj["abilities"]["enabled"] == true) {
-                                if (obj["ability"].contains("only")) {
-                                    auto v = obj["ability"]["only"];
+                        case TargetType::Permission:
+                            if (!obj.contains("perm")) return true; // Default pass
+                            if (obj["perm"].is_boolean() && obj["perm"] == true) return true; // Boolean value is true, pass
+                            if (obj["perm"].is_object() && obj["perm"].contains("enabled") && obj["perm"]["enabled"] == true) {
+                                if (obj["perm"].contains("only")) {
+                                    auto v = obj["perm"]["only"];
                                     if (v.is_array()) {
                                         for (auto& s : v) {
                                             if (s.is_string() && s == this->name1) return true;
                                         }
                                     }
-                                } else if (obj["ability"].contains("except")) {
-                                    auto v = obj["ability"]["except"];
+                                } else if (obj["perm"].contains("except")) {
+                                    auto v = obj["perm"]["except"];
                                     if (v.is_array()) {
                                         for (auto& s : v) {
                                             if (s.is_string() && s == this->name1) return false;
@@ -222,24 +223,24 @@ class PermCommand : public Command {
                     if (ab.extra["update"].is_boolean()) return ab.extra["update"].get<bool>();
                     auto& obj = ab.extra["update"];
                     switch (this->targetType1) {
-                        case TargetType::Group:
-                            if (!obj.contains("group")) return true; // Default pass
-                            if (obj["group"].is_boolean() && obj["group"] == true) return true; // Boolean value is true, pass
-                            if (obj["group"].is_object()) {
-                                if (obj["group"].contains("only")) {
+                        case TargetType::Role:
+                            if (!obj.contains("role")) return true; // Default pass
+                            if (obj["role"].is_boolean() && obj["role"] == true) return true; // Boolean value is true, pass
+                            if (obj["role"].is_object()) {
+                                if (obj["role"].contains("only")) {
                                     /*
                                     "only": [
                                         {
-                                            "name": "group-a",
+                                            "name": "role-a",
                                             "member": true, // = "member": ["add", "rm"]
                                             "priority": true, // = "priority": ["set"]
-                                            "ability": true, // = "abilities": ["add", "rm", "set"]
+                                            "permission": true, // = "permissions": ["add", "rm", "set"]
                                             "display_name": true, // = "display_name": ["set"]
                                         },
-                                        "group-b", // default allow all operations
+                                        "role-b", // default allow all operations
                                     ]
                                     */
-                                    auto v = obj["group"]["only"];
+                                    auto v = obj["role"]["only"];
                                     if (v.is_array()) {
                                         for (auto& p : v) {
                                             if (p.is_string() && p == this->name1) return true;
@@ -268,18 +269,18 @@ class PermCommand : public Command {
                                                             }
                                                         }
                                                         break;
-                                                    case TargetType::Ability:
-                                                        if (p.contains("ability") && p["ability"].is_boolean() && p["ability"] == true) return true;
-                                                        if (p["ability"].is_array()) {
+                                                    case TargetType::Permission:
+                                                        if (p.contains("perm") && p["perm"].is_boolean() && p["perm"] == true) return true;
+                                                        if (p["perm"].is_array()) {
                                                             switch (this->action) {
                                                                 case Action::Add:
-                                                                    if (std::find(p["ability"].begin(), p["ability"].end(), "add") != p["ability"].end()) return true;
+                                                                    if (std::find(p["perm"].begin(), p["perm"].end(), "add") != p["perm"].end()) return true;
                                                                     break;
                                                                 case Action::Remove:
-                                                                    if (std::find(p["ability"].begin(), p["ability"].end(), "rm") != p["ability"].end()) return true;
+                                                                    if (std::find(p["perm"].begin(), p["perm"].end(), "rm") != p["perm"].end()) return true;
                                                                     break;
                                                                 case Action::Set:
-                                                                    if (std::find(p["ability"].begin(), p["ability"].end(), "set") != p["ability"].end()) return true;
+                                                                    if (std::find(p["perm"].begin(), p["perm"].end(), "set") != p["perm"].end()) return true;
                                                                     break;
                                                             }
                                                         }
@@ -298,8 +299,8 @@ class PermCommand : public Command {
                                             }
                                         }
                                     }
-                                } else if (obj["group"].contains("except")) {
-                                    auto v = obj["group"]["except"];
+                                } else if (obj["role"].contains("except")) {
+                                    auto v = obj["role"]["except"];
                                     if (v.is_array()) {
                                         for (auto& p : v) {
                                             if (p.is_string() && p == this->name1) return false;
@@ -328,18 +329,18 @@ class PermCommand : public Command {
                                                             }
                                                         }
                                                         break;
-                                                    case TargetType::Ability:
-                                                        if (p.contains("ability") && p["ability"].is_boolean() && p["ability"] == true) return false;
-                                                        if (p["ability"].is_array()) {
+                                                    case TargetType::Permission:
+                                                        if (p.contains("perm") && p["perm"].is_boolean() && p["perm"] == true) return false;
+                                                        if (p["perm"].is_array()) {
                                                             switch (this->action) {
                                                                 case Action::Add:
-                                                                    if (std::find(p["ability"].begin(), p["ability"].end(), "add") != p["ability"].end()) return false;
+                                                                    if (std::find(p["perm"].begin(), p["perm"].end(), "add") != p["perm"].end()) return false;
                                                                     break;
                                                                 case Action::Remove:
-                                                                    if (std::find(p["ability"].begin(), p["ability"].end(), "rm") != p["ability"].end()) return false;
+                                                                    if (std::find(p["perm"].begin(), p["perm"].end(), "rm") != p["perm"].end()) return false;
                                                                     break;
                                                                 case Action::Set:
-                                                                    if (std::find(p["ability"].begin(), p["ability"].end(), "set") != p["ability"].end()) return false;
+                                                                    if (std::find(p["perm"].begin(), p["perm"].end(), "set") != p["perm"].end()) return false;
                                                                     break;
                                                             }
                                                         }
@@ -373,15 +374,15 @@ class PermCommand : public Command {
         if ((OriginType)ori.getOriginType() == OriginType::Player) {
             auto pl = ori.getPlayer();
             outp.trAddMessage("permapi.cmd.output.view.player.yourStatus");
-            outp.trAddMessage("permapi.cmd.output.view.player.groupsTitle");
-            for (auto& group : mod.perm.getPlayerGroups(pl->getXuid())) {
-                outp.trAddMessage("  * " + group->displayName);
+            outp.trAddMessage("permapi.cmd.output.view.player.rolesTitle");
+            for (auto& role : mod.perm.getPlayerRoles(pl->getXuid())) {
+                outp.trAddMessage("  * " + role->displayName);
             }
-            outp.trAddMessage("permapi.cmd.output.view.player.abilitiesTitle");
-            for (auto& ability : mod.perm.getPlayerAbilities(pl->getXuid())) {
-                outp.addMessage("  * " + ability.name + ": " + 
-                    (mod.perm.abilitiesInfo.contains(ability.name) ?
-                        mod.perm.abilitiesInfo[ability.name].desc : pl->tr("permapi.cmd.output.noDesc")));
+            outp.trAddMessage("permapi.cmd.output.view.player.permissionsTitle");
+            for (auto& perm : mod.perm.getPlayerPermissions(pl->getXuid())) {
+                outp.addMessage("  * " + perm.name + ": " + 
+                    (mod.perm.permInfoList.contains(perm.name) ?
+                        mod.perm.permInfoList[perm.name].desc : pl->tr("permapi.cmd.output.noDesc")));
             }
             return true;
         } else {
@@ -392,40 +393,40 @@ class PermCommand : public Command {
 
     bool handleCreate(CommandOrigin const& ori, CommandOutput& outp) const {
         switch (this->targetType1) {
-            // perm create group
-            case TargetType::Group: {
+            // perm create role
+            case TargetType::Role: {
                 if (this->name1.empty()) {
                     outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
-                if (mod.perm.groups.contains(this->name1)) {
-                    outp.trError("permapi.cmd.error.groupAlreadyExists");
+                if (mod.perm.roles.contains(this->name1)) {
+                    outp.trError("permapi.cmd.error.roleAlreadyExists");
                     break;
                 }
-                auto group = mod.perm.createGroup(this->name1, this->name1);
-                if (this->priority_set) group->priority = this->priority;
-                if (this->displayName_set) group->displayName = this->displayName;
+                auto role = mod.perm.createRole(this->name1, this->name1);
+                if (this->priority_set) role->priority = this->priority;
+                if (this->displayName_set) role->displayName = this->displayName;
                 mod.perm.save();
-                outp.trSuccess("permapi.cmd.output.create.group.success");
+                outp.trSuccess("permapi.cmd.output.create.role.success");
                 return true;
             }
-            // perm create ability
-            case TargetType::Ability:
+            // perm create perm
+            case TargetType::Permission:
                 if (this->name1.empty()) {
                     outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
-                if (mod.perm.abilitiesInfo.contains(this->name1)) {
-                    outp.trError("permapi.cmd.error.abilityAlreadyExists");
+                if (mod.perm.permInfoList.contains(this->name1)) {
+                    outp.trError("permapi.cmd.error.permissionAlreadyExists");
                     break;
                 }
-                if (!PermAbility::isValidAbilityName(this->name1)) {
-                    outp.trError("permapi.cmd.error.invalidAbilityName");
-                    outp.trError("permapi.cmd.output.abilityNameExamples");
+                if (!PermInstance::isValidPermissionName(this->name1)) {
+                    outp.trError("permapi.cmd.error.invalidPermissionName");
+                    outp.trError("permapi.cmd.output.permissionNameExamples");
                     break;
                 }
-                mod.perm.registerAbility(this->name1, this->desc);
-                outp.trSuccess("permapi.cmd.output.create.ability.success");
+                mod.perm.registerPermission(this->name1, this->desc);
+                outp.trSuccess("permapi.cmd.output.create.perm.success");
                 return true;
             default:
                 outp.trError("permapi.cmd.error.invalidCommand");
@@ -436,33 +437,33 @@ class PermCommand : public Command {
 
     bool handleDelete(CommandOrigin const& ori, CommandOutput& outp) const {
         switch (this->targetType1) {
-            // perm delete group
-            case TargetType::Group: {
+            // perm delete role
+            case TargetType::Role: {
                 if (this->name1.empty()) {
                     outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
-                if (!mod.perm.groups.contains(this->name1)) {
-                    outp.trError("permapi.cmd.error.groupNotFound");
+                if (!mod.perm.roles.contains(this->name1)) {
+                    outp.trError("permapi.cmd.error.roleNotFound");
                     break;
                 }
-                mod.perm.groups.remove(this->name1);
+                mod.perm.roles.remove(this->name1);
                 mod.perm.save();
-                outp.trSuccess("permapi.cmd.output.delete.group.success");
+                outp.trSuccess("permapi.cmd.output.delete.role.success");
                 return true;
             }
-            // perm delete ability
-            case TargetType::Ability:
+            // perm delete perm
+            case TargetType::Permission:
                 if (this->name1.empty()) {
                     outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
-                if (!mod.perm.abilitiesInfo.contains(this->name1)) {
-                    outp.trError("permapi.cmd.error.abilityNotFound");
+                if (!mod.perm.permInfoList.contains(this->name1)) {
+                    outp.trError("permapi.cmd.error.permissionNotFound");
                     break;
                 }
-                mod.perm.deleteAbility(this->name1);
-                outp.trSuccess("permapi.cmd.output.delete.ability.success");
+                mod.perm.deletePermission(this->name1);
+                outp.trSuccess("permapi.cmd.output.delete.perm.success");
                 return true;
             default:
                 outp.trError("permapi.cmd.error.invalidCommand");
@@ -473,18 +474,18 @@ class PermCommand : public Command {
 
     bool handleList(CommandOrigin const& ori, CommandOutput& outp) const {
         switch (this->targetType1) {
-            // perm list group
-            case TargetType::Group: {
-                if (mod.perm.groups.empty()) {
-                    outp.trSuccess("permapi.cmd.output.list.group.none");
+            // perm list role
+            case TargetType::Role: {
+                if (mod.perm.roles.empty()) {
+                    outp.trSuccess("permapi.cmd.output.list.role.none");
                     return true;
                 }
-                outp.trAddMessage("permapi.cmd.output.list.group.header");
-                for (auto& group : mod.perm.groups) {
-                    std::string msg = "* " + group->displayName;
-                    if (!DisplayNameIsSameAs(group->name, group->displayName)) {
+                outp.trAddMessage("permapi.cmd.output.list.role.header");
+                for (auto& role : mod.perm.roles) {
+                    std::string msg = "* " + role->displayName;
+                    if (!DisplayNameIsSameAs(role->name, role->displayName)) {
                         // If the display name is different from name, append the name
-                        msg += " <" + group->name + ">";
+                        msg += " <" + role->name + ">";
                     }
                     if ((OriginType)ori.getOriginType() == OriginType::Player) {
                         auto pl = ori.getPlayer();
@@ -492,8 +493,8 @@ class PermCommand : public Command {
                             outp.trError("permapi.cmd.error.internal");
                             break;
                         }
-                        if (mod.perm.isMemberOf(pl->getXuid(), group->name)) {
-                            outp.trAddMessage(msg + " " + pl->tr("permapi.cmd.output.list.group.isMember"));
+                        if (mod.perm.isMemberOf(pl->getXuid(), role->name)) {
+                            outp.trAddMessage(msg + " " + pl->tr("permapi.cmd.output.list.role.isMember"));
                             continue;
                         }
                     }
@@ -501,28 +502,28 @@ class PermCommand : public Command {
                 }
                 return true;
             }
-            // perm list ability
-            case TargetType::Ability:
-                if (mod.perm.abilitiesInfo.empty()) {
-                    outp.trSuccess("permapi.cmd.output.list.ability.none");
+            // perm list perm
+            case TargetType::Permission:
+                if (mod.perm.permInfoList.empty()) {
+                    outp.trSuccess("permapi.cmd.output.list.perm.none");
                     return true;
                 }
-                outp.trAddMessage("permapi.cmd.output.list.ability.header");
-                for (auto& ability : mod.perm.abilitiesInfo) {
-                    if (ability.desc.empty()) {
+                outp.trAddMessage("permapi.cmd.output.list.perm.header");
+                for (auto& perm : mod.perm.permInfoList) {
+                    if (perm.desc.empty()) {
                         if ((OriginType)ori.getOriginType() == OriginType::Player) {
                             auto pl = ori.getPlayer();
                             if (!pl) {
                                 outp.trError("permapi.cmd.error.internal");
                                 break;
                             }  
-                            outp.trAddMessage("* " + ability.name + ": " + pl->tr("permapi.cmd.output.noDesc"));
+                            outp.trAddMessage("* " + perm.name + ": " + pl->tr("permapi.cmd.output.noDesc"));
                             continue;
                         }
-                        outp.trAddMessage("* " + ability.name + ": " + tr("permapi.cmd.output.noDesc"));
+                        outp.trAddMessage("* " + perm.name + ": " + tr("permapi.cmd.output.noDesc"));
                         continue;
                     }
-                    outp.trAddMessage("* " + ability.name + ": " + ability.desc);
+                    outp.trAddMessage("* " + perm.name + ": " + perm.desc);
                 }
                 return true;
             default:
@@ -534,42 +535,42 @@ class PermCommand : public Command {
     
     bool handleView(CommandOrigin const& ori, CommandOutput& outp) const {
         switch (this->targetType1) {
-            // perm view group
-            case TargetType::Group: {
+            // perm view role
+            case TargetType::Role: {
                 if (this->name1.empty()) {
                     outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
-                if (!mod.perm.groups.contains(this->name1)) {
-                    outp.trError("permapi.cmd.error.groupNotFound");
+                if (!mod.perm.roles.contains(this->name1)) {
+                    outp.trError("permapi.cmd.error.roleNotFound");
                     break;
                 }
-                auto& group = mod.perm.groups[this->name1];
-                outp.trAddMessage("permapi.cmd.output.view.group.header");
-                outp.trAddMessage("permapi.cmd.output.view.group.info.name",
-                                  arg("groupName", group->name));
-                outp.trAddMessage("permapi.cmd.output.view.group.info.displayName", group->displayName);
-                outp.trAddMessage("permapi.cmd.output.view.group.info.priority", std::to_string(group->priority));
-                if (group->getType() != PermGroup::Type::Everyone) {
-                    if (group->members.empty()) {
-                        outp.trAddMessage("permapi.cmd.output.view.group.info.membersNone");
+                auto& role = mod.perm.roles[this->name1];
+                outp.trAddMessage("permapi.cmd.output.view.role.header");
+                outp.trAddMessage("permapi.cmd.output.view.role.info.name",
+                                  arg("roleName", role->name));
+                outp.trAddMessage("permapi.cmd.output.view.role.info.displayName", role->displayName);
+                outp.trAddMessage("permapi.cmd.output.view.role.info.priority", std::to_string(role->priority));
+                if (role->getType() != Role::Type::Everyone) {
+                    if (role->members.empty()) {
+                        outp.trAddMessage("permapi.cmd.output.view.role.info.membersNone");
                     } else {
-                        outp.trAddMessage("permapi.cmd.output.view.group.info.members");
-                        for (auto& xid : group->members) {
+                        outp.trAddMessage("permapi.cmd.output.view.role.info.members");
+                        for (auto& xid : role->members) {
                             outp.trAddMessage("  * " + PlayerInfo::fromXuid(xid) + " (" + xid + ")");
                         }
                     }
                 }
-                if (group->abilities.empty()) {
-                    outp.trAddMessage("permapi.cmd.output.view.group.info.abilitiesNone");
+                if (role->permissions.empty()) {
+                    outp.trAddMessage("permapi.cmd.output.view.role.info.permissionsNone");
                 } else {
-                    outp.trAddMessage("permapi.cmd.output.view.group.info.abilities");
-                    for (auto& ability : group->abilities) {
-                        std::string suffix = (ability.enabled ? 
-                            "permapi.cmd.output.view.group.enabled" :
-                            "permapi.cmd.output.view.group.disabled");
-                        if (ability.enabled && ability.extra.is_object() && !ability.extra.empty()) {
-                            suffix = "permapi.cmd.output.view.group.enabledWithExtra";
+                    outp.trAddMessage("permapi.cmd.output.view.role.info.permissions");
+                    for (auto& perm : role->permissions) {
+                        std::string suffix = (perm.enabled ? 
+                            "permapi.cmd.output.view.role.enabled" :
+                            "permapi.cmd.output.view.role.disabled");
+                        if (perm.enabled && perm.extra.is_object() && !perm.extra.empty()) {
+                            suffix = "permapi.cmd.output.view.role.enabledWithExtra";
                         }
                         if ((OriginType)ori.getOriginType() == OriginType::Player) {
                             auto pl = ori.getPlayer();
@@ -581,32 +582,32 @@ class PermCommand : public Command {
                         } else {
                             suffix = tr(suffix);
                         }
-                        outp.trAddMessage("  * " + ability.name + " " + suffix);
+                        outp.trAddMessage("  * " + perm.name + " " + suffix);
                     }
                 }
                 // Special cases
-                if (group->getType() == PermGroup::Type::Admin) {
-                    outp.trAddMessage("permapi.cmd.output.view.group.note.admin", group->displayName);
-                } else if (group->getType() == PermGroup::Type::Everyone) {
-                    outp.trAddMessage("permapi.cmd.output.view.group.note.everyone", group->displayName);
+                if (role->getType() == Role::Type::Admin) {
+                    outp.trAddMessage("permapi.cmd.output.view.role.note.admin", role->displayName);
+                } else if (role->getType() == Role::Type::Everyone) {
+                    outp.trAddMessage("permapi.cmd.output.view.role.note.everyone", role->displayName);
                 }
                 return true;
             }
-            // perm view ability
-            case TargetType::Ability: {
+            // perm view perm
+            case TargetType::Permission: {
                 if (this->name1.empty()) {
                     outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
-                if (!mod.perm.abilitiesInfo.contains(this->name1)) {
-                    outp.trError("permapi.cmd.error.abilityNotFound");
+                if (!mod.perm.permInfoList.contains(this->name1)) {
+                    outp.trError("permapi.cmd.error.permissionNotFound");
                     break;
                 }
-                auto& ability = mod.perm.abilitiesInfo[this->name1];
-                outp.trAddMessage("permapi.cmd.output.view.ability.header");
-                outp.trAddMessage("permapi.cmd.output.view.ability.info.name",
-                                  arg("abilityName", ability.name));
-                outp.trAddMessage("permapi.cmd.output.view.ability.info.desc", ability.desc);
+                auto& perm = mod.perm.permInfoList[this->name1];
+                outp.trAddMessage("permapi.cmd.output.view.perm.header");
+                outp.trAddMessage("permapi.cmd.output.view.perm.info.name",
+                                  arg("permissionName", perm.name));
+                outp.trAddMessage("permapi.cmd.output.view.perm.info.desc", perm.desc);
                 return true;
             }
             // perm view player
@@ -621,26 +622,26 @@ class PermCommand : public Command {
                     break;
                 }
                 outp.trAddMessage("permapi.cmd.output.view.player.status", this->name1);
-                outp.trAddMessage("permapi.cmd.output.view.player.groupsTitle");
-                for (auto& group : mod.perm.getPlayerGroups(target)) {
-                    outp.trAddMessage("  * " + group->displayName);
+                outp.trAddMessage("permapi.cmd.output.view.player.rolesTitle");
+                for (auto& role : mod.perm.getPlayerRoles(target)) {
+                    outp.trAddMessage("  * " + role->displayName);
                 }
-                outp.trAddMessage("permapi.cmd.output.view.player.abilitiesTitle");
-                for (auto& ability : mod.perm.getPlayerAbilities(target)) {
+                outp.trAddMessage("permapi.cmd.output.view.player.permissionsTitle");
+                for (auto& perm : mod.perm.getPlayerPermissions(target)) {
                     if ((OriginType)ori.getOriginType() == OriginType::Player) {
                         auto pl = ori.getPlayer();
                         if (!pl) {
                             outp.trError("permapi.cmd.error.internal");
                             break;
                         }
-                        outp.addMessage("  * " + ability.name + ": " + 
-                            (mod.perm.abilitiesInfo.contains(ability.name) ?
-                                mod.perm.abilitiesInfo[ability.name].desc : pl->tr("permapi.cmd.output.noDesc")));
+                        outp.addMessage("  * " + perm.name + ": " + 
+                            (mod.perm.permInfoList.contains(perm.name) ?
+                                mod.perm.permInfoList[perm.name].desc : pl->tr("permapi.cmd.output.noDesc")));
                         continue;
                     }
-                    outp.addMessage("  * " + ability.name + ": " + 
-                        (mod.perm.abilitiesInfo.contains(ability.name) ?
-                            mod.perm.abilitiesInfo[ability.name].desc : tr("permapi.cmd.output.noDesc")));
+                    outp.addMessage("  * " + perm.name + ": " + 
+                        (mod.perm.permInfoList.contains(perm.name) ?
+                            mod.perm.permInfoList[perm.name].desc : tr("permapi.cmd.output.noDesc")));
                 }
                 return true;
             }
@@ -653,26 +654,26 @@ class PermCommand : public Command {
 
     bool handleUpdate(CommandOrigin const& ori, CommandOutput& outp) const {
         switch (this->targetType1) {
-            // perm update group
-            case TargetType::Group: {
+            // perm update role
+            case TargetType::Role: {
                 if (this->name1.empty()) {
                     outp.trError("permapi.cmd.error.invalidCommand");
                     break;
                 }
-                if (!mod.perm.groups.contains(this->name1)) {
-                    outp.trError("permapi.cmd.error.groupNotFound");
+                if (!mod.perm.roles.contains(this->name1)) {
+                    outp.trError("permapi.cmd.error.roleNotFound");
                     break;
                 }
-                auto& group = mod.perm.groups[this->name1];
+                auto& role = mod.perm.roles[this->name1];
                 switch (this->targetType2) {
-                    // perm update group ... member    
+                    // perm update role ... member    
                     case TargetType::Member: {
-                        if (group->getType() == PermGroup::Type::Everyone) {
+                        if (role->getType() == Role::Type::Everyone) {
                             outp.trError("permapi.cmd.error.modifyMembersOfEveryone");
                             return false;
                         }
                         switch (this->action) {
-                            // perm update group add member
+                            // perm update role add member
                             case Action::Add: {
                                 if (this->name2.empty()) {
                                     outp.trError("permapi.cmd.error.invalidCommand");
@@ -683,15 +684,15 @@ class PermCommand : public Command {
                                     outp.trError("permapi.cmd.error.playerNotFound");
                                     return false;     
                                 }
-                                group->addMember(xid);
+                                role->addMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("permapi.cmd.output.update.group.member.add.success",
+                                outp.trSuccess("permapi.cmd.output.update.role.member.add.success",
                                                arg("name", this->name2),
                                                arg("xuid", xid),
-                                               arg("groupDisplayName", group->displayName));
+                                               arg("roleDisplayName", role->displayName));
                                 return true;
                             }
-                            // perm update group remove member
+                            // perm update role remove member
                             case Action::Remove: {
                                 if (this->name2.empty()) {
                                     outp.trError("permapi.cmd.error.invalidCommand");
@@ -702,12 +703,12 @@ class PermCommand : public Command {
                                     outp.trError("permapi.cmd.error.playerNotFound");
                                     return false;
                                 }
-                                group->removeMember(xid);
+                                role->removeMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("permapi.cmd.output.update.group.member.remove.success",
+                                outp.trSuccess("permapi.cmd.output.update.role.member.remove.success",
                                                arg("name", this->name2),
                                                arg("xuid", xid),
-                                               arg("groupDisplayName", group->displayName));
+                                               arg("roleDisplayName", role->displayName));
                                 return true;
                             }
                             default:
@@ -716,17 +717,17 @@ class PermCommand : public Command {
                         }
                         break;
                     }
-                    // perm update group ... ability
-                    case TargetType::Ability: {
+                    // perm update role ... perm
+                    case TargetType::Permission: {
                         switch (this->action) {
-                            // perm update group add ability
+                            // perm update role add perm
                             case Action::Add: {
                                 if (this->name2.empty()) {
                                     outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
-                                if (!mod.perm.abilitiesInfo.contains(this->name2)) {
-                                    outp.trError("permapi.cmd.error.abilityNotFound");
+                                if (!mod.perm.permInfoList.contains(this->name2)) {
+                                    outp.trError("permapi.cmd.error.permissionNotFound");
                                     break;
                                 }
                                 nlohmann::json extraJson;
@@ -738,21 +739,21 @@ class PermCommand : public Command {
                                         return false;
                                     }
                                 }
-                                group->setAbility(this->name2, enabled_set ? this->enabled : true, extraJson);
+                                role->setPermission(this->name2, enabled_set ? this->enabled : true, extraJson);
                                 mod.perm.save();
-                                outp.trSuccess("permapi.cmd.output.update.group.ability.add.success",
+                                outp.trSuccess("permapi.cmd.output.update.role.perm.add.success",
                                                arg("name", this->name2),
-                                               arg("groupDisplayName", group->displayName));
+                                               arg("roleDisplayName", role->displayName));
                                 return true;
                             }
-                            // perm update group add ability
+                            // perm update role add perm
                             case Action::Set: {
                                 if (this->name2.empty()) {
                                     outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
-                                if (!mod.perm.abilitiesInfo.contains(this->name2)) {
-                                    outp.trError("permapi.cmd.error.abilityNotFound");
+                                if (!mod.perm.permInfoList.contains(this->name2)) {
+                                    outp.trError("permapi.cmd.error.permissionNotFound");
                                     break;
                                 }
                                 if (!this->enabled_set) {
@@ -769,11 +770,11 @@ class PermCommand : public Command {
                                         return false;
                                     }
                                 }
-                                group->setAbility(this->name2, this->enabled, extraJson);
+                                role->setPermission(this->name2, this->enabled, extraJson);
                                 mod.perm.save();
                                 std::string suffix = (this->enabled ? 
-                                    "permapi.cmd.output.update.group.ability.set.enabled" :
-                                    "permapi.cmd.output.update.group.ability.set.disabled");
+                                    "permapi.cmd.output.update.role.perm.set.enabled" :
+                                    "permapi.cmd.output.update.role.perm.set.disabled");
                                 if ((OriginType)ori.getOriginType() == OriginType::Player) {
                                     auto pl = ori.getPlayer();
                                     if (!pl) {
@@ -784,27 +785,27 @@ class PermCommand : public Command {
                                 } else {
                                     suffix = tr(suffix);
                                 }
-                                outp.trSuccess("permapi.cmd.output.update.group.ability.set.success",
+                                outp.trSuccess("permapi.cmd.output.update.role.perm.set.success",
                                                arg("name", this->name2),
-                                               arg("groupDisplayName", group->displayName),
+                                               arg("roleDisplayName", role->displayName),
                                                arg("enable", suffix));
                                 return true;
                             }
-                            // perm update group remove ability
+                            // perm update role remove perm
                             case Action::Remove: {
                                 if (this->name2.empty()) {
                                     outp.trError("permapi.cmd.error.invalidCommand");
                                     break;
                                 }
-                                if (!mod.perm.abilitiesInfo.contains(this->name2)) {
-                                    outp.trError("permapi.cmd.error.abilityNotFound");
+                                if (!mod.perm.permInfoList.contains(this->name2)) {
+                                    outp.trError("permapi.cmd.error.permissionNotFound");
                                     break;
                                 }
-                                group->removeAbility(this->name2);
+                                role->removePermission(this->name2);
                                 mod.perm.save();
-                                outp.trSuccess("permapi.cmd.output.update.group.ability.remove.success",
+                                outp.trSuccess("permapi.cmd.output.update.role.perm.remove.success",
                                                arg("name", this->name2),
-                                               arg("groupDisplayName", group->displayName));
+                                               arg("roleDisplayName", role->displayName));
                                 return true;
                             }
                             default:
@@ -813,7 +814,7 @@ class PermCommand : public Command {
                         }
                         break;
                     }
-                    // perm update group set priority
+                    // perm update role set priority
                     case TargetType::Priority: {
                         if (this->action != Action::Set) {
                             outp.trError("permapi.cmd.error.invalidCommand");
@@ -823,14 +824,14 @@ class PermCommand : public Command {
                             outp.trError("permapi.cmd.error.missingArgument", "priority");
                             break;
                         }
-                        group->priority = this->priority;
+                        role->priority = this->priority;
                         mod.perm.save();
-                        outp.trSuccess("permapi.cmd.output.update.group.priority.set.success",
-                                       arg("groupDisplayName", group->displayName),
+                        outp.trSuccess("permapi.cmd.output.update.role.priority.set.success",
+                                       arg("roleDisplayName", role->displayName),
                                        arg("priority", this->priority));
                         return true;
                     }
-                    // perm update group set display_name
+                    // perm update role set display_name
                     case TargetType::DisplayName: {
                         if (this->action != Action::Set) {
                             outp.trError("permapi.cmd.error.invalidCommand");
@@ -840,10 +841,10 @@ class PermCommand : public Command {
                             outp.trError("permapi.cmd.error.missingArgument", "display_name");
                             break;
                         }
-                        group->displayName = this->displayName;
+                        role->displayName = this->displayName;
                         mod.perm.save();
-                        outp.trSuccess("permapi.cmd.output.update.group.displayName.set.success",
-                                       arg("groupName", group->name),
+                        outp.trSuccess("permapi.cmd.output.update.role.displayName.set.success",
+                                       arg("roleName", role->name),
                                        arg("displayName", this->displayName));
                         return true;
                     }
@@ -865,35 +866,35 @@ class PermCommand : public Command {
                     return false;
                 }
                 switch (this->targetType2) {
-                    case TargetType::Group: {
+                    case TargetType::Role: {
                         if (this->name2.empty()) {
                             outp.trError("permapi.cmd.error.invalidCommand");
                             break;
                         }
-                        if (!mod.perm.groups.contains(this->name2)) {
-                            outp.trError("permapi.cmd.error.groupNotFound");
+                        if (!mod.perm.roles.contains(this->name2)) {
+                            outp.trError("permapi.cmd.error.roleNotFound");
                             break;
                         }
-                        auto& group = mod.perm.groups[this->name2];
+                        auto& role = mod.perm.roles[this->name2];
                         switch (this->action) {
-                            // perm update player add group
+                            // perm update player add role
                             case Action::Add: {
-                                group->addMember(xid);
+                                role->addMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("permapi.cmd.output.update.player.group.add.success",
+                                outp.trSuccess("permapi.cmd.output.update.player.role.add.success",
                                                arg("name", this->name1),
                                                arg("xuid", xid),
-                                               arg("groupDisplayName", group->displayName));
+                                               arg("roleDisplayName", role->displayName));
                                 return true;
                             }
-                            // perm update player remove group
+                            // perm update player remove role
                             case Action::Remove: {
-                                group->removeMember(xid);
+                                role->removeMember(xid);
                                 mod.perm.save();
-                                outp.trSuccess("permapi.cmd.output.update.player.group.remove.success",
+                                outp.trSuccess("permapi.cmd.output.update.player.role.remove.success",
                                                arg("name", this->name1),
                                                arg("xuid", xid),
-                                               arg("groupDisplayName", group->displayName));
+                                               arg("roleDisplayName", role->displayName));
                                 return true;
                             }
                             default:
@@ -968,7 +969,7 @@ public:
         if (reg == nullptr) {
             return;
         }
-        reg->registerCommand("perm", "Permission group system",
+        reg->registerCommand("perm", "Permission role system",
                              CommandPermissionLevel::Any,
                              {CommandFlagValue::None},
                              {(CommandFlagValue)0x80});
@@ -993,21 +994,21 @@ public:
         auto action_set = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::action, "Set", "Set");
         auto action_remove = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::action, "Remove", "Remove");
         
-        reg->addEnum<TargetType>("Group", {{"group", TargetType::Group}});
-        reg->addEnum<TargetType>("Ability", {{"ability", TargetType::Ability}});
+        reg->addEnum<TargetType>("Role", {{"role", TargetType::Role}});
+        reg->addEnum<TargetType>("Permission", {{"perm", TargetType::Permission}});
         reg->addEnum<TargetType>("Player", {{"player", TargetType::Player}});
         reg->addEnum<TargetType>("Priority", {{"priority", TargetType::Priority}});
         reg->addEnum<TargetType>("Member", {{"member", TargetType::Member}});
         reg->addEnum<TargetType>("DisplayName", {{"display_name", TargetType::DisplayName}});
 
-        auto target_group1 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType1, "Group1", "Group");
-        auto target_ability1 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType1, "Ability1", "Ability");
+        auto target_role1 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType1, "Role1", "Role");
+        auto target_perm1 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType1, "Permission1", "Permission");
         auto target_player1 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType1, "Player1", "Player");
         auto target_priority1 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType1, "Priority1", "Priority");
         auto target_member1 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType1, "Member1", "Member");
         
-        auto target_group2 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType2, "Group2", "Group");
-        auto target_ability2 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType2, "Ability2", "Ability");
+        auto target_role2 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType2, "Role2", "Role");
+        auto target_perm2 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType2, "Permission2", "Permission");
         auto target_player2 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType2, "Player2", "Player");
         auto target_priority2 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType2, "Priority2", "Priority");
         auto target_member2 = makeMandatory<CommandParameterDataType::ENUM>(&PermCommand::targetType2, "Member2", "Member");
@@ -1022,42 +1023,42 @@ public:
         auto param_extra= makeOptional(&PermCommand::extra, "extraJson", &PermCommand::extra_set);
 
         reg->registerOverload<PermCommand>("perm");
-        // perm create group <Name> [DisplayName] [Priority]
-        reg->registerOverload<PermCommand>("perm", subcmd_create, target_group1, param_name1, param_displayName, param_priority);
-        // perm delete ability <Name> [Desc]
-        reg->registerOverload<PermCommand>("perm", subcmd_create, target_ability1, param_name1, param_desc);
-        // perm delete group <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_delete, target_group1, param_name1);
-        // perm delete ability <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_delete, target_ability1, param_name1);
-        // perm update group <Name> add member <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_group1, param_name1, action_add, target_member2, param_name2);
-        // perm update group <Name> rm member <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_group1, param_name1, action_remove, target_member2, param_name2);
-        // perm update group <Name> add ability <Name> [Enabled] [ExtraJson]
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_group1, param_name1, action_add, target_ability2, param_name2, param_enabled, param_extra);
-        // perm update group <Name> set ability <Name> [Enabled] [ExtraJson]
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_group1, param_name1, action_set, target_ability2, param_name2, param_enabled, param_extra);
-        // perm update group <Name> rm ability <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_group1, param_name1, action_remove, target_ability2, param_name2);
-        // perm update group <Name> set priority [Priority]
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_group1, param_name1, action_set, target_priority2, param_priority);
-        // perm update group <Name> set display_name [DisplayName]
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_group1, param_name1, action_set, target_display_name2, param_displayName);
-        // perm update player <Name> add group <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_player1, param_name1, action_add, target_group2, param_name2);
-        // perm update player <Name> rm group <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_update, target_player1, param_name1, action_remove, target_group2, param_name2);
-        // perm view group <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_view, target_group1, param_name1);
-        // perm view ability <Name>
-        reg->registerOverload<PermCommand>("perm", subcmd_view, target_ability1, param_name1);
+        // perm create role <Name> [DisplayName] [Priority]
+        reg->registerOverload<PermCommand>("perm", subcmd_create, target_role1, param_name1, param_displayName, param_priority);
+        // perm delete perm <Name> [Desc]
+        reg->registerOverload<PermCommand>("perm", subcmd_create, target_perm1, param_name1, param_desc);
+        // perm delete role <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_delete, target_role1, param_name1);
+        // perm delete perm <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_delete, target_perm1, param_name1);
+        // perm update role <Name> add member <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_role1, param_name1, action_add, target_member2, param_name2);
+        // perm update role <Name> rm member <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_role1, param_name1, action_remove, target_member2, param_name2);
+        // perm update role <Name> add perm <Name> [Enabled] [ExtraJson]
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_role1, param_name1, action_add, target_perm2, param_name2, param_enabled, param_extra);
+        // perm update role <Name> set perm <Name> [Enabled] [ExtraJson]
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_role1, param_name1, action_set, target_perm2, param_name2, param_enabled, param_extra);
+        // perm update role <Name> rm perm <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_role1, param_name1, action_remove, target_perm2, param_name2);
+        // perm update role <Name> set priority [Priority]
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_role1, param_name1, action_set, target_priority2, param_priority);
+        // perm update role <Name> set display_name [DisplayName]
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_role1, param_name1, action_set, target_display_name2, param_displayName);
+        // perm update player <Name> add role <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_player1, param_name1, action_add, target_role2, param_name2);
+        // perm update player <Name> rm role <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_update, target_player1, param_name1, action_remove, target_role2, param_name2);
+        // perm view role <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_view, target_role1, param_name1);
+        // perm view perm <Name>
+        reg->registerOverload<PermCommand>("perm", subcmd_view, target_perm1, param_name1);
         // perm view player <Name>
         reg->registerOverload<PermCommand>("perm", subcmd_view, target_player1, param_name1);
-        // perm list group
-        reg->registerOverload<PermCommand>("perm", subcmd_list, target_group1);
-        // perm list ability
-        reg->registerOverload<PermCommand>("perm", subcmd_list, target_ability1);
+        // perm list role
+        reg->registerOverload<PermCommand>("perm", subcmd_list, target_role1);
+        // perm list perm
+        reg->registerOverload<PermCommand>("perm", subcmd_list, target_perm1);
     }
 };
 

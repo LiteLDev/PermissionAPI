@@ -7,7 +7,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     switch (ul_reason_for_call) {
         case DLL_PROCESS_ATTACH:
             LL::registerPlugin("PermissionAPI",
-                               "Builtin permission group API for LiteLoaderBDS",
+                               "Builtin & Powerful permission API for LiteLoaderBDS",
                                PERM_VER,
                                std::map<std::string, std::string>{
                                    {"Author", "Jasonzyt(LiteLDev)"},

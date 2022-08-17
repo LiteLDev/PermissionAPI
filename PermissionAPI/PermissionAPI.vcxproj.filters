@@ -39,13 +39,13 @@
     <ClInclude Include="Data\Foundation.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Data\PermAbility.hpp">
+    <ClInclude Include="Data\Permission.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Data\PermGroup.hpp">
+    <ClInclude Include="Data\Role.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Data\PermMember.hpp">
+    <ClInclude Include="Data\Member.hpp">
       <Filter>Header\Data</Filter>
     </ClInclude>
     <ClInclude Include="Data\JsonHelper.hpp">

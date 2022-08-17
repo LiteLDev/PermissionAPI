@@ -1,35 +1,35 @@
 #pragma once
 #include <LLAPI.h>
-#include "Data/PermGroup.hpp"
+#include "Data/Role.hpp"
 
 class PermissionAPI {
 
     HMODULE hPlugin;
 
-    using FuncCreateGroup = void(*)(const std::string&, const std::string&, std::weak_ptr<PermGroup>&);
-    using FuncGroupExists = bool(*)(const std::string&);
-    using FuncGetGroup = void(*)(const std::string&, std::weak_ptr<PermGroup>&);
-    using FuncGetOrCreateGroup = void(*)(const std::string&, std::weak_ptr<PermGroup>&);
-    using FuncRegisterAbility = void(*)(const std::string&, const std::string&);
-    using FuncDeleteAbility = void(*)(const std::string&);
-    using FuncAbilityExists = bool(*)(const std::string&);
-    using FuncCheckAbility = bool(*)(const xuid_t&, const std::string&);
+    using FuncCreateRole = void(*)(const std::string&, const std::string&, std::weak_ptr<PERM::Role>&);
+    using FuncRoleExists = bool(*)(const std::string&);
+    using FuncGetRole = void(*)(const std::string&, std::weak_ptr<PERM::Role>&);
+    using FuncGetOrCreateRole = void(*)(const std::string&, std::weak_ptr<PERM::Role>&);
+    using FuncRegisterPermission = void(*)(const std::string&, const std::string&);
+    using FuncDeletePermission = void(*)(const std::string&);
+    using FuncPermissionExists = bool(*)(const std::string&);
+    using FuncCheckPermission = bool(*)(const xuid_t&, const std::string&);
     using FuncIsMemberOf = bool(*)(const xuid_t&, const std::string&);
-    using FuncGetPlayerGroups = void(*)(const xuid_t&, PermGroups&);
-    using FuncGetPlayerAbilities = void(*)(const xuid_t&, PermAbilities&);
+    using FuncGetPlayerRoles = void(*)(const xuid_t&, PERM::Roles&);
+    using FuncGetPlayerPermissions = void(*)(const xuid_t&, PERM::Permissions&);
     using FuncSaveData = void(*)();
 
-    FuncCreateGroup funcCreateGroup;
-    FuncGroupExists funcGroupExists;
-    FuncGetGroup funcGetGroup;
-    FuncGetOrCreateGroup funcGetOrCreateGroup;
-    FuncRegisterAbility funcRegisterAbility;
-    FuncDeleteAbility funcDeleteAbility;
-    FuncAbilityExists funcAbilityExists;
-    FuncCheckAbility funcCheckAbility;
+    FuncCreateRole funcCreateRole;
+    FuncRoleExists funcRoleExists;
+    FuncGetRole funcGetRole;
+    FuncGetOrCreateRole funcGetOrCreateRole;
+    FuncRegisterPermission funcRegisterPermission;
+    FuncDeletePermission funcDeletePermission;
+    FuncPermissionExists funcPermissionExists;
+    FuncCheckPermission funcCheckPermission;
     FuncIsMemberOf funcIsMemberOf;
-    FuncGetPlayerGroups funcGetPlayerGroups;
-    FuncGetPlayerAbilities funcGetPlayerAbilities;
+    FuncGetPlayerRoles funcGetPlayerRoles;
+    FuncGetPlayerPermissions funcGetPlayerPermissions;
     FuncSaveData funcSaveData;
 
     template <typename T>
@@ -48,151 +48,151 @@ public:
             throw std::runtime_error("Cannot get the plugin object");
         }
         hPlugin = pPtr->handle;
-        funcCreateGroup = getFunc<FuncCreateGroup>("PERM_CreateGroup");
-        funcGroupExists = getFunc<FuncGroupExists>("PERM_GroupExists");
-        funcGetGroup = getFunc<FuncGetGroup>("PERM_GetGroup");
-        funcGetOrCreateGroup = getFunc<FuncGetOrCreateGroup>("PERM_GetOrCreateGroup");
-        funcRegisterAbility = getFunc<FuncRegisterAbility>("PERM_RegisterAbility");
-        funcDeleteAbility = getFunc<FuncDeleteAbility>("PERM_DeleteAbility");
-        funcAbilityExists = getFunc<FuncAbilityExists>("PERM_AbilityExists");
-        funcCheckAbility = getFunc<FuncCheckAbility>("PERM_CheckAbility");
+        funcCreateRole = getFunc<FuncCreateRole>("PERM_CreateRole");
+        funcRoleExists = getFunc<FuncRoleExists>("PERM_RoleExists");
+        funcGetRole = getFunc<FuncGetRole>("PERM_GetRole");
+        funcGetOrCreateRole = getFunc<FuncGetOrCreateRole>("PERM_GetOrCreateRole");
+        funcRegisterPermission = getFunc<FuncRegisterPermission>("PERM_RegisterPermission");
+        funcDeletePermission = getFunc<FuncDeletePermission>("PERM_DeletePermission");
+        funcPermissionExists = getFunc<FuncPermissionExists>("PERM_PermissionExists");
+        funcCheckPermission = getFunc<FuncCheckPermission>("PERM_CheckPermission");
         funcIsMemberOf = getFunc<FuncIsMemberOf>("PERM_IsMemberOf");
-        funcGetPlayerGroups = getFunc<FuncGetPlayerGroups>("PERM_GetPlayerGroups");
-        funcGetPlayerAbilities = getFunc<FuncGetPlayerAbilities>("PERM_GetPlayerAbilities");
+        funcGetPlayerRoles = getFunc<FuncGetPlayerRoles>("PERM_GetPlayerRoles");
+        funcGetPlayerPermissions = getFunc<FuncGetPlayerPermissions>("PERM_GetPlayerPermissions");
         funcSaveData = getFunc<FuncSaveData>("PERM_SaveData");
     }
 
     /**
-     * @brief Create a Group object.
+     * @brief Create a Role object.
      * 
-     * @param  name         The name of the group.
-     * @param  displayName  The display name of the group.
-     * @return std::weak_ptr<PermGroup>  The created group(weak ref).
-     * @throws std::invalid_argument     If the group already exists. 
+     * @param  name         The name of the role.
+     * @param  displayName  The display name of the role.
+     * @return std::weak_ptr<PERM::Role>  The created role(weak ref).
+     * @throws std::invalid_argument      If the role already exists. 
      * @par Example
      * @code
      * PermissionAPI api;
-     * auto group = api.createGroup("group1", "Group 1");
+     * auto role = api.createRole("role1", "Role 1");
      * ...
-     * if (!group.expired()) {
-     *     auto groupPtr = group.lock();
-     *     groupPtr->addMember("1145141919810");
+     * if (!role.expired()) {
+     *     auto rolePtr = role.lock();
+     *     rolePtr->addMember("1145141919810");
      *     api.saveData();
      * }
      * @endcode
      */
-    std::weak_ptr<PermGroup> createGroup(const std::string& name, const std::string& displayName) {
-        if (funcCreateGroup == nullptr) {
+    std::weak_ptr<PERM::Role> createRole(const std::string& name, const std::string& displayName) {
+        if (funcCreateRole == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        std::weak_ptr<PermGroup> ptr{};
-        funcCreateGroup(name, displayName, ptr);
+        std::weak_ptr<PERM::Role> ptr{};
+        funcCreateRole(name, displayName, ptr);
         return ptr;
     }
 
     /**
-     * @brief Check if a group exists.
+     * @brief Check if a role exists.
      * 
-     * @param  name  The name of the group.
-     * @return bool  True If the group exists, false otherwise.
+     * @param  name  The name of the role.
+     * @return bool  True If the role exists, false otherwise.
      */
-    bool groupExists(const std::string& name) {
-        if (funcGroupExists == nullptr) {
+    bool roleExists(const std::string& name) {
+        if (funcRoleExists == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        return funcGroupExists(name);
+        return funcRoleExists(name);
     }
 
     /**
-     * @brief Get a group object.
+     * @brief Get a role object.
      * 
-     * @param  name                      The name of the group.
-     * @return std::weak_ptr<PermGroup>  The group(weak ref).
-     * @throws std::invalid_argument     If the group does not exist. 
+     * @param  name                       The name of the role.
+     * @return std::weak_ptr<PERM::Role>  The role(weak ref).
+     * @throws std::invalid_argument      If the role does not exist. 
      */
-    std::weak_ptr<PermGroup> getGroup(const std::string& name) {
-        if (funcGetGroup == nullptr) {
+    std::weak_ptr<PERM::Role> getRole(const std::string& name) {
+        if (funcGetRole == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        std::weak_ptr<PermGroup> ptr{};
-        funcGetGroup(name, ptr);
+        std::weak_ptr<PERM::Role> ptr{};
+        funcGetRole(name, ptr);
         return ptr;
     }
 
     /**
-     * @brief Get a group object. If the group does not exist, it will be created.
+     * @brief Get a role object. If the role does not exist, it will be created.
      * 
-     * @param  name                      The name of the group.
-     * @return std::weak_ptr<PermGroup>  The group(weak ref).
+     * @param  name                       The name of the role.
+     * @return std::weak_ptr<PERM::Role>  The role(weak ref).
      */
-    std::weak_ptr<PermGroup> getOrCreateGroup(const std::string& name) {
-        if (funcGetOrCreateGroup == nullptr) {
+    std::weak_ptr<PERM::Role> getOrCreateRole(const std::string& name) {
+        if (funcGetOrCreateRole == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        std::weak_ptr<PermGroup> ptr{};
-        funcGetOrCreateGroup(name, ptr);
+        std::weak_ptr<PERM::Role> ptr{};
+        funcGetOrCreateRole(name, ptr);
         return ptr;
     }
 
     /**
-     * @brief Register an ability.
+     * @brief Register an permission.
      *
-     * @param name  The name of the ability.
-     * @param desc  The description name of the ability.
+     * @param name  The name of the permission.
+     * @param desc  The description name of the permission.
      */
-    void registerAbility(const std::string& name, const std::string& desc) {
-        if (funcRegisterAbility == nullptr) {
+    void registerPermission(const std::string& name, const std::string& desc) {
+        if (funcRegisterPermission == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        funcRegisterAbility(name, desc);
+        funcRegisterPermission(name, desc);
     }
     
     /**
-     * @brief Delete an ability.
+     * @brief Delete a permission.
      * 
-     * @param    name  The name of the ability.
-     * @warning  This function will also delete the ability instance in groups.
+     * @param    name  The name of the permission.
+     * @warning  This function will also delete the permission instances in roles.
      */
-    void deleteAbility(const std::string& name) {
-        if (funcDeleteAbility == nullptr) {
+    void deletePermission(const std::string& name) {
+        if (funcDeletePermission == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        funcDeleteAbility(name);
+        funcDeletePermission(name);
     }
 
     /**
-     * @brief Check if an ability exists.
+     * @brief Check if a permission exists.
      * 
-     * @param  name  The name of the ability.
-     * @return bool  True If the ability exists, false otherwise.
+     * @param  name  The name of the permission.
+     * @return bool  True If the permission exists, false otherwise.
      */
-    bool abilityExists(const std::string& name) {
-        if (funcAbilityExists == nullptr) {
+    bool PermissionExists(const std::string& name) {
+        if (funcPermissionExists == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        return funcAbilityExists(name);
+        return funcPermissionExists(name);
     }
 
     /**
-     * @brief Check whether the player has the ability or not.
+     * @brief Check whether the player has the Permission or not.
      * 
      * @param  xuid  The xuid of the player.
-     * @param  name  The name of the ability.
-     * @return bool  True If the player has the ability, false otherwise.
+     * @param  name  The name of the Permission.
+     * @return bool  True If the player has the Permission, false otherwise.
      */
-    bool checkAbility(const xuid_t& xuid, const std::string& name) {
-        if (funcCheckAbility == nullptr) {
+    bool checkPermission(const xuid_t& xuid, const std::string& name) {
+        if (funcCheckPermission == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        return funcCheckAbility(xuid, name);
+        return funcCheckPermission(xuid, name);
     }
 
     /**
-     * @brief Check if a player is a member of a group.
+     * @brief Check if a player is a member of a role.
      * 
      * @param  xuid  The xuid of the player.
-     * @param  name  The name of the group.
-     * @return bool  True If the player is a member of the group, false otherwise.
+     * @param  name  The name of the role.
+     * @return bool  True If the player is a member of the role, false otherwise.
      */
     bool isMemberOf(const xuid_t& xuid, const std::string& name) {
         if (funcIsMemberOf == nullptr) {
@@ -202,33 +202,33 @@ public:
     }
 
     /**
-     * @brief Get the groups of a player.
+     * @brief Get the roles of a player.
      * 
-     * @param  xuid        The xuid of the player.
-     * @return PermGroups  The groups of the player.
+     * @param  xuid         The xuid of the player.
+     * @return PERM::Roles  The roles of the player.
      */
-    PermGroups getPlayerGroups(const xuid_t& xuid) {
-        if (funcGetPlayerGroups == nullptr) {
+    PERM::Roles getPlayerRoles(const xuid_t& xuid) {
+        if (funcGetPlayerRoles == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        PermGroups groups;
-        funcGetPlayerGroups(xuid, groups);
-        return groups;
+        PERM::Roles roles;
+        funcGetPlayerRoles(xuid, roles);
+        return roles;
     }
 
     /**
-     * @brief Get the abilities of a player.
+     * @brief Get the permissions of a player.
      * 
-     * @param  xuid        The xuid of the player.
-     * @return PermAbilities  The abilities of the player.
+     * @param  xuid               The xuid of the player.
+     * @return PERM::Permissions  The permissions of the player.
      */
-    PermAbilities getPlayerAbilities(const xuid_t& xuid) {
-        if (funcGetPlayerAbilities == nullptr) {
+    PERM::Permissions getPlayerPermissions(const xuid_t& xuid) {
+        if (funcGetPlayerPermissions == nullptr) {
             throw std::runtime_error("Function not found");
         }
-        PermAbilities abilities;
-        funcGetPlayerAbilities(xuid, abilities);
-        return abilities;
+        PERM::Permissions permissions;
+        funcGetPlayerPermissions(xuid, permissions);
+        return permissions;
     }
 
     /**

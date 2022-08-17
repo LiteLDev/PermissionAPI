@@ -1,62 +1,62 @@
 #pragma once
-#include "PermGroup.hpp"
+#include "Role.hpp"
 
 template <typename T>
-void from_json(const nlohmann::json& j, PermVector<T>& v);
+void from_json(const nlohmann::json& j, PERM::PermVector<T>& v);
 template <typename T>
-void to_json(nlohmann::json& j, const PermVector<T>& v);
+void to_json(nlohmann::json& j, const PERM::PermVector<T>& v);
 
 template <typename T>
-void from_json(const nlohmann::json& j, PermContainer<T>& v);
+void from_json(const nlohmann::json& j, PERM::PermContainer<T>& v);
 template <typename T>
-void to_json(nlohmann::json& j, const PermContainer<T>& v);
+void to_json(nlohmann::json& j, const PERM::PermContainer<T>& v);
 
-void from_json(const nlohmann::json& j, PermAbility& v);
-void to_json(nlohmann::json& j, const PermAbility& v);
+void from_json(const nlohmann::json& j, PERM::PermInstance& v);
+void to_json(nlohmann::json& j, const PERM::PermInstance& v);
 
-void from_json(const nlohmann::json& j, PermAbilities& v);
-void to_json(nlohmann::json& j, const PermAbilities& v);
+void from_json(const nlohmann::json& j, PERM::Permissions& v);
+void to_json(nlohmann::json& j, const PERM::Permissions& v);
 
-void from_json(const nlohmann::json& j, PermAbilitiesInfo& v);
-void to_json(nlohmann::json& j, const PermAbilitiesInfo& v);
+void from_json(const nlohmann::json& j, PERM::PermInfoList& v);
+void to_json(nlohmann::json& j, const PERM::PermInfoList& v);
 
-void from_json(const nlohmann::json& j, GeneralPermGroup& v);
-void to_json(nlohmann::json& j, const GeneralPermGroup& v);
+void from_json(const nlohmann::json& j, PERM::GeneralRole& v);
+void to_json(nlohmann::json& j, const PERM::GeneralRole& v);
 
-void from_json(const nlohmann::json& j, EveryonePermGroup& v);
-void to_json(nlohmann::json& j, const EveryonePermGroup& v);
+void from_json(const nlohmann::json& j, PERM::EveryoneRole& v);
+void to_json(nlohmann::json& j, const PERM::EveryoneRole& v);
 
-void from_json(const nlohmann::json& j, AdminPermGroup& v);
-void to_json(nlohmann::json& j, const AdminPermGroup& v);
+void from_json(const nlohmann::json& j, PERM::AdminRole& v);
+void to_json(nlohmann::json& j, const PERM::AdminRole& v);
 
-void from_json(const nlohmann::json& j, PermGroups& v);
-void to_json(nlohmann::json& j, const PermGroups& v);
+void from_json(const nlohmann::json& j, PERM::Roles& v);
+void to_json(nlohmann::json& j, const PERM::Roles& v);
 
 
 
 // PermVector<T>
 template <typename T>
-inline void from_json(const nlohmann::json& j, PermVector<T>& v) {
+inline void from_json(const nlohmann::json& j, PERM::PermVector<T>& v) {
     v = j.get<std::vector<T>>();
 }
 template <typename T>
-inline void to_json(nlohmann::json& j, const PermVector<T>& v) {
+inline void to_json(nlohmann::json& j, const PERM::PermVector<T>& v) {
     j = (std::vector<T>)v;
 }
 
 // PermContainer<T>
 template <typename T>
-inline void from_json(const nlohmann::json& j, PermContainer<T>& v) {
+inline void from_json(const nlohmann::json& j, PERM::PermContainer<T>& v) {
     v = j.get<std::vector<T>>();
 }
 template <typename T>
-inline void to_json(nlohmann::json& j, const PermContainer<T>& v) {
+inline void to_json(nlohmann::json& j, const PERM::PermContainer<T>& v) {
     j = (std::vector<T>)v;
 }
 
-// PermAbility
-inline void from_json(const nlohmann::json& j, PermAbility& v) {
-    if (j.is_boolean()) { // convenience
+// PermInstance
+inline void from_json(const nlohmann::json& j, PERM::PermInstance& v) {
+    if (j.is_boolean()) {
         v.enabled = j.get<bool>();
         return;
     }
@@ -66,42 +66,47 @@ inline void from_json(const nlohmann::json& j, PermAbility& v) {
         copy.erase("enabled");
         v.extra = copy;
     } else {
-        throw std::runtime_error("Failed to load the ability: the json object does not contain the 'enabled' field");
+        throw std::runtime_error("Failed to load the permission instance: the json object does not contain the 'enabled' field");
     }
 }
-inline void to_json(nlohmann::json& j, const PermAbility& v) {
+inline void to_json(nlohmann::json& j, const PERM::PermInstance& v) {
+    if (!v.extra.is_object() || (v.extra.is_object() && v.extra.empty())) {
+        j = v.enabled;
+        return;
+    }
     j["enabled"] = v.enabled;
     if (v.extra.is_object() && !v.extra.empty()) {
         j.merge_patch(v.extra);
     }
 }
 
-// PermAbilities
-inline void from_json(const nlohmann::json& j, PermAbilities& v) {
+// Permissions
+inline void from_json(const nlohmann::json& j, PERM::Permissions& v) {
     v.clear();
     for (auto it = j.begin(); it != j.end(); ++it) {
-        auto a = it.value().get<PermAbility>();
+        PERM::PermInstance a;
+        from_json(it.value(), a);
         a.name = it.key();
         v.push_back(a);
     }
 }
-inline void to_json(nlohmann::json& j, const PermAbilities& v) {
+inline void to_json(nlohmann::json& j, const PERM::Permissions& v) {
     j = nlohmann::json::object();
     for (auto& it : v) {
-        j[it.name] = it;
+        to_json(j[it.name], it);
     }
 }
 
-// PermAbilitiesInfo
-inline void from_json(const nlohmann::json& j, PermAbilitiesInfo& v) {
+// PermInfoList
+inline void from_json(const nlohmann::json& j, PERM::PermInfoList& v) {
     v.clear();
     for (auto it = j.begin(); it != j.end(); ++it) {
-        PermAbilityInfo info;
+        PERM::PermInfo info;
         info.name = it.key();
         info.desc = it.value()["desc"];
     }
 }
-inline void to_json(nlohmann::json& j, const PermAbilitiesInfo& v) {
+inline void to_json(nlohmann::json& j, const PERM::PermInfoList& v) {
     j = nlohmann::json::object();
     for (auto& it : v) {
         j[it.name] = {
@@ -110,86 +115,86 @@ inline void to_json(nlohmann::json& j, const PermAbilitiesInfo& v) {
     }
 }
 
-// GeneralPermGroup
-inline void from_json(const nlohmann::json& j, GeneralPermGroup& v) {
-    if (j.contains("members")) v.members = j["members"].get<PermMembers>();
+// GeneralRole
+inline void from_json(const nlohmann::json& j, PERM::GeneralRole& v) {
+    if (j.contains("members")) v.members = j["members"].get<PERM::Members>();
     if (j.contains("priority")) v.priority = j["priority"];
     if (j.contains("displayName")) v.displayName = j["displayName"];
-    if (j.contains("abilities")) v.abilities = j["abilities"].get<PermAbilities>();
+    if (j.contains("permissions")) from_json(j["permissions"], v.permissions);
 }
-inline void to_json(nlohmann::json& j, const GeneralPermGroup& v) {
+inline void to_json(nlohmann::json& j, const PERM::GeneralRole& v) {
     j["members"] = v.members;
     j["priority"] = v.priority;
     j["displayName"] = v.displayName;
-    j["abilities"] = v.abilities;
+    to_json(j["permissions"], v.permissions);
 }
 
-// EveryonePermGroup
-inline void from_json(const nlohmann::json& j, EveryonePermGroup& v) {
+// EveryoneRole
+inline void from_json(const nlohmann::json& j, PERM::EveryoneRole& v) {
     if (j.contains("priority")) v.priority = j["priority"];
     if (j.contains("displayName")) v.displayName = j["displayName"];
-    if (j.contains("abilities")) v.abilities = j["abilities"].get<PermAbilities>();
+    if (j.contains("permissions")) from_json(j["permissions"], v.permissions);
 }
-inline void to_json(nlohmann::json& j, const EveryonePermGroup& v) {
+inline void to_json(nlohmann::json& j, const PERM::EveryoneRole& v) {
     j["priority"] = v.priority;
     j["displayName"] = v.displayName;
-    j["abilities"] = v.abilities;
+    to_json(j["permissions"], v.permissions);
 }
 
-// AdminPermGroup
-inline void from_json(const nlohmann::json& j, AdminPermGroup& v) {
-    if (j.contains("members")) v.members = j["members"].get<PermMembers>();
+// AdminRole
+inline void from_json(const nlohmann::json& j, PERM::AdminRole& v) {
+    if (j.contains("members")) v.members = j["members"].get<PERM::Members>();
     if (j.contains("priority")) v.priority = j["priority"];
     if (j.contains("displayName")) v.displayName = j["displayName"];
-    if (j.contains("abilities")) v.abilities = j["abilities"].get<PermAbilities>();
+    if (j.contains("permissions")) from_json(j["permissions"], v.permissions);
 }
-inline void to_json(nlohmann::json& j, const AdminPermGroup& v) {
+inline void to_json(nlohmann::json& j, const PERM::AdminRole& v) {
     j["members"] = v.members;
     j["priority"] = v.priority;
     j["displayName"] = v.displayName;
-    j["abilities"] = v.abilities;
+    to_json(j["permissions"], v.permissions);
 }
 
-// PermGroups
-inline void from_json(const nlohmann::json& j, PermGroups& v) {
+// Roles
+inline void from_json(const nlohmann::json& j, PERM::Roles& v) {
     v.clear();
     for (auto it = j.begin(); it != j.end(); ++it) {
         auto& name = it.key();
         if (name == "everyone") {
-            EveryonePermGroup group;
-            from_json(it.value(), group);
-            group.name = name;
-            v.push_back(std::make_shared<EveryonePermGroup>(group));
+            PERM::EveryoneRole role;
+            from_json(it.value(), role);
+            role.name = name;
+            v.push_back(std::make_shared<PERM::EveryoneRole>(role));
         } else if (name == "admin") {
-            AdminPermGroup group;
-            from_json(it.value(), group);
-            group.name = name;
-            v.push_back(std::make_shared<AdminPermGroup>(group));
+            PERM::AdminRole role;
+            from_json(it.value(), role);
+            role.name = name;
+            v.push_back(std::make_shared<PERM::AdminRole>(role));
         } else {
-            GeneralPermGroup group;
-            from_json(it.value(), group);
-            group.name = name;
-            v.push_back(std::make_shared<GeneralPermGroup>(group));
+            PERM::GeneralRole role;
+            from_json(it.value(), role);
+            role.name = name;
+            v.push_back(std::make_shared<PERM::GeneralRole>(role));
         }
         if (v.back()->name.empty()) {
-            throw std::runtime_error("Failed to load the perm group: the name of the group is empty!");
+            throw std::runtime_error("Failed to load the perm role: the name of the role is empty!");
         }
         if (v.back()->displayName.empty()) {
             v.back()->displayName = name;
         }
     }
 }
-inline void to_json(nlohmann::json& j, const PermGroups& v) {
+inline void to_json(nlohmann::json& j, const PERM::Roles& v) {
     for (auto& it : v) {
         switch (it->getType()) {
-            case PermGroup::Type::General:
-                j[it->name] = *(GeneralPermGroup*)it.get();
+            case PERM::Role::Type::General:
+                to_json(j[it->name], *(PERM::GeneralRole*)it.get());
                 break;
-            case PermGroup::Type::Admin:
-                j[it->name] = *(AdminPermGroup*)it.get();
+            case PERM::Role::Type::Admin:
+                to_json(j[it->name], *(PERM::AdminRole*)it.get());
                 break;
-            case PermGroup::Type::Everyone:
-                j[it->name] = *(EveryonePermGroup*)it.get();
+            case PERM::Role::Type::Everyone:
+                to_json(j[it->name], *(PERM::EveryoneRole*)it.get());
                 break;
             default:
                 break;

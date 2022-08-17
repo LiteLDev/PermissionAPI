@@ -3,17 +3,19 @@
 #include "Data/JsonHelper.hpp"
 #include "Data.h"
 
+using namespace PERM;
+
 nlohmann::json Permission::defaultData = {
-    {"abilitiesInfo", nlohmann::json::object()},
-    {"groups", {
+    {"permissions", nlohmann::json::object()},
+    {"roles", {
         {"everyone", {
             {"displayName", "§7everyone"}, 
-            {"abilities", nlohmann::json::object()},
+            {"permissions", nlohmann::json::object()},
             {"priority", 0}
         }},
         {"admin", {
             {"displayName", "§cadmin"}, 
-            {"abilities", nlohmann::json::object()},
+            {"permissions", nlohmann::json::object()},
             {"members", nlohmann::json::array()},
             {"priority", 2147483647}
         }}
@@ -22,17 +24,17 @@ nlohmann::json Permission::defaultData = {
 
 bool Permission::validateData() {
     bool result = false;
-    for (auto& group : this->groups) {
-        auto oldName = group->name;
-        auto changed = group->validate();
+    for (auto& role : this->roles) {
+        auto oldName = role->name;
+        auto changed = role->validate();
         if (changed) {
-            logger.warn(tr("Group name '{}' contains invalid characters.", oldName));
-            logger.warn(tr("Group name '{}' has been replaced with '{}'.", oldName, group->name));
+            logger.warn(tr("Role name '{}' contains invalid characters.", oldName));
+            logger.warn(tr("Role name '{}' has been replaced with '{}'.", oldName, role->name));
             result = true;
         }
-        for (auto& ab : group->abilities) {
-            if (!abilitiesInfo.contains(ab.name)) {
-                abilitiesInfo.push_back({ ab.name, "" });
+        for (auto& ab : role->permissions) {
+            if (!permInfoList.contains(ab.name)) {
+                permInfoList.push_back({ ab.name, "" });
                 result = true;
             }
         }
@@ -50,10 +52,8 @@ void Permission::load() {
     if (res.has_value()) {
         try {
             auto j = nlohmann::json::parse(res.value());
-            // AbilitiesInfo
-            j["abilitiesInfo"].get_to(this->abilitiesInfo);
-            // Groups
-            j["groups"].get_to(this->groups);
+            from_json(j["permissions"], this->permInfoList);
+            from_json(j["roles"], this->roles);
             this->validateData();
         } catch (const std::exception& e) {
             logger.error(tr("permapi.data.process.fail", e.what()));
@@ -67,112 +67,111 @@ void Permission::load() {
 void Permission::save() {
     try {
         this->validateData();
-        nlohmann::json j{
-            {"abilitiesInfo", this->abilitiesInfo},
-            {"groups", this->groups}
-        };
+        nlohmann::json j = nlohmann::json::object();
+        to_json(j["permissions"], this->permInfoList);
+        to_json(j["roles"], this->roles);
         WriteAllFile(DATA_FILE, j.dump(4));
     } catch (const std::exception& e) {
         logger.error(tr("permapi.data.save.fail", e.what()));
     }
 }
 
-std::shared_ptr<PermGroup> Permission::createGroup(const std::string& name, const std::string& displayName) {
-    if (this->groups.contains(name)) {
-        throw std::invalid_argument("Group already exists");
+std::shared_ptr<Role> Permission::createRole(const std::string& name, const std::string& displayName) {
+    if (this->roles.contains(name)) {
+        throw std::invalid_argument("Role already exists");
     }
-    PermGroup* group = nullptr;
+    Role* role = nullptr;
     if (name == "everyone") {
-        group = new EveryonePermGroup;
+        role = new EveryoneRole;
     } else if (name == "admin") {
-        group = new AdminPermGroup;
+        role = new AdminRole;
     } else {
-        group = new GeneralPermGroup;
+        role = new GeneralRole;
     }
-    group->name = name;
-    group->displayName = displayName;
-    auto& ret = this->groups[name] = std::shared_ptr<PermGroup>(group);
+    role->name = name;
+    role->displayName = displayName;
+    auto& ret = this->roles[name] = std::shared_ptr<Role>(role);
     save();
     return ret;
 }
 
-std::shared_ptr<PermGroup> Permission::getGroup(const std::string& name) {
-    if (!this->groups.contains(name)) {
-        throw std::invalid_argument("Group not found");
+std::shared_ptr<Role> Permission::getRole(const std::string& name) {
+    if (!this->roles.contains(name)) {
+        throw std::invalid_argument("Role not found");
     }
-    return this->groups.at(name);
+    return this->roles.at(name);
 }
 
-std::shared_ptr<PermGroup> Permission::getOrCreateGroup(const std::string& name) {
-    return (this->groups.contains(name) ? getGroup(name) : createGroup(name, name));
+std::shared_ptr<Role> Permission::getOrCreateRole(const std::string& name) {
+    return (this->roles.contains(name) ? getRole(name) : createRole(name, name));
 }
 
-void Permission::registerAbility(const std::string& name, const std::string& desc) {
-    if (!PermAbility::isValidAbilityName(name)) {
-        throw std::invalid_argument("Invalid ability name: " + name);
+void Permission::registerPermission(const std::string& name, const std::string& desc) {
+    if (!PermInstance::isValidPermissionName(name)) {
+        throw std::invalid_argument("Invalid permission name: " + name);
     }
-    if (this->abilitiesInfo.contains(name)) {
-        throw std::invalid_argument("The ability already exists");
+    if (this->permInfoList.contains(name)) {
+        throw std::invalid_argument("The permission already exists");
     }
-    this->abilitiesInfo[name] = PermAbilityInfo{name, desc};
+    this->permInfoList[name] = PermInfo{name, desc};
     this->save();
 }
 
-void Permission::deleteAbility(const std::string& name) {
-    if (!this->abilitiesInfo.contains(name)) {
-        throw std::invalid_argument("Ability not found");
+void Permission::deletePermission(const std::string& name) {
+    if (!this->permInfoList.contains(name)) {
+        throw std::invalid_argument("Permission not found");
     }
-    this->abilitiesInfo.remove(name);
-    for (auto& group : this->groups) {
-        if (group->getType() != PermGroup::Type::Admin) {
-            if (group->abilityDefined(name)) {
-                group->removeAbility(name);
+    this->permInfoList.remove(name);
+    for (auto& role : this->roles) {
+        if (role->getType() != Role::Type::Admin) {
+            if (role->permissionDefined(name)) {
+                role->removePermission(name);
             }
         }
     }
     this->save();
 }
 
-bool Permission::checkAbility(const xuid_t& xuid, const std::string& name) const {
-    return this->getPlayerAbilities(xuid).contains(name);
+bool Permission::checkPermission(const xuid_t& xuid, const std::string& name) const {
+    return this->getPlayerPermissions(xuid).contains(name);
 }
 
-bool Permission::isMemberOf(const xuid_t& xuid, const std::string& groupName) const {
-    return this->groups.contains(groupName) && this->groups.at(groupName)->hasMember(xuid);
+bool Permission::isMemberOf(const xuid_t& xuid, const std::string& roleName) const {
+    return this->roles.contains(roleName) && this->roles.at(roleName)->hasMember(xuid);
 }
 
-PermGroups Permission::getPlayerGroups(const xuid_t& xuid) const {
-    PermGroups result;
-    for (auto& group : groups) {
-        if (group->hasMember(xuid)) {
-            result.push_back(group);
+Roles Permission::getPlayerRoles(const xuid_t& xuid) const {
+    Roles result;
+    for (auto& role : roles) {
+        if (role->hasMember(xuid)) {
+            result.push_back(role);
         }
     }
     return result.sortByPriority(true);
 }
 
-PermAbilities Permission::getPlayerAbilities(const xuid_t& xuid) const {
-    PermAbilities result;
+Permissions Permission::getPlayerPermissions(const xuid_t& xuid) const {
+    Permissions result;
     if (this->isMemberOf(xuid, "admin")) {
-        for (auto& info : abilitiesInfo) {
-            result.push_back(PermAbility{info.name, true});
+        for (auto& info : permInfoList) {
+            result.push_back(PermInstance{info.name, true});
         }
         return result;
     }
-    auto playerGroups = this->getPlayerGroups(xuid);
-    for (auto& group : playerGroups.sortByPriority()) {
-        for (auto& ability : group->abilities) {
-            if (ability.enabled) {
-                if (result.contains(ability.name)) {
-                    auto& ext = result[ability.name].extra;
-                    if (ext.is_object()) ext.merge_patch(ability.extra);
-                    else ext = ability.extra;
+    auto playerRoles = this->getPlayerRoles(xuid);
+    for (auto& role : playerRoles.sortByPriority()) {
+        for (auto& perm : role->permissions) {
+            if (perm.enabled) {
+                if (result.contains(perm.name)) {
+                    auto& ext = result[perm.name].extra;
+                    if (ext.is_object()) ext.merge_patch(perm.extra);
+                    else ext = perm.extra;
                 } else {
-                    result.push_back(ability);
+                    result.push_back(perm);
                 }
             } else {
-                if (result.contains(ability.name))
-                    result.remove(ability.name);
+                if (result.contains(perm.name))
+                    result.remove(perm.name);
             }
         }
     }
