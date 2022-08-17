@@ -82,21 +82,21 @@ class PermCommand : public Command {
     bool checkPermission(const xuid_t& xuid) const {
         auto permissions = mod.perm.getPlayerPermissions(xuid);
         if (permissions.contains("PermissionAPI:cmd_control")) {
-            auto& ab = permissions.at("PermissionAPI:cmd_control");
-            if (!ab.extra.is_object() || (ab.extra.is_object() && ab.extra.empty())) {
+            auto& perm = permissions.at("PermissionAPI:cmd_control");
+            if (!perm.extra.is_object() || (perm.extra.is_object() && perm.extra.empty())) {
                 // Invalid extra data/No extra data
                 return true;
             }
             switch (this->subcmd) {
                 case SubCommands::None: {
-                    if (!ab.extra.contains("view_self")) return true;
-                    if (ab.extra.at("view_self").is_boolean()) return ab.extra.at("view_self"); 
+                    if (!perm.extra.contains("view_self")) return true;
+                    if (perm.extra.at("view_self").is_boolean()) return perm.extra.at("view_self"); 
                     break;
                 }
                 case SubCommands::Create: {
-                    if (!ab.extra.contains("create")) return true; // No more restrictions, pass
-                    if (ab.extra.at("create").is_boolean()) return ab.extra.at("create"); 
-                    auto& obj = ab.extra["create"];
+                    if (!perm.extra.contains("create")) return true; // No more restrictions, pass
+                    if (perm.extra.at("create").is_boolean()) return perm.extra.at("create"); 
+                    auto& obj = perm.extra["create"];
                     switch (this->targetType1) {
                         case TargetType::Role:
                             if (!obj.contains("role")) return true; // Default pass
@@ -112,9 +112,9 @@ class PermCommand : public Command {
                     break;
                 }
                 case SubCommands::Delete: {
-                    if (!ab.extra.contains("delete")) return true; // No more restrictions, pass
-                    if (ab.extra["delete"].is_boolean()) return ab.extra["delete"].get<bool>();
-                    auto& obj = ab.extra["delete"];
+                    if (!perm.extra.contains("delete")) return true; // No more restrictions, pass
+                    if (perm.extra["delete"].is_boolean()) return perm.extra["delete"].get<bool>();
+                    auto& obj = perm.extra["delete"];
                     switch (this->targetType1) {
                         case TargetType::Role:
                             if (!obj.contains("role")) return true; // Default pass
@@ -130,9 +130,9 @@ class PermCommand : public Command {
                     break;
                 }
                 case SubCommands::List: {
-                    if (!ab.extra.contains("list")) return true; // No more restrictions, pass
-                    if (ab.extra["list"].is_boolean()) return ab.extra["list"].get<bool>();
-                    auto& obj = ab.extra["list"];
+                    if (!perm.extra.contains("list")) return true; // No more restrictions, pass
+                    if (perm.extra["list"].is_boolean()) return perm.extra["list"].get<bool>();
+                    auto& obj = perm.extra["list"];
                     switch (this->targetType1) {
                         case TargetType::Role:
                             if (!obj.contains("role")) return true; // Default pass
@@ -148,9 +148,9 @@ class PermCommand : public Command {
                     break;
                 }
                 case SubCommands::View: {
-                    if (!ab.extra.contains("view")) return true; // No more restrictions, pass
-                    if (ab.extra["view"].is_boolean()) return ab.extra["view"].get<bool>();
-                    auto& obj = ab.extra["view"];
+                    if (!perm.extra.contains("view")) return true; // No more restrictions, pass
+                    if (perm.extra["view"].is_boolean()) return perm.extra["view"].get<bool>();
+                    auto& obj = perm.extra["view"];
                     switch (this->targetType1) {
                         case TargetType::Role:
                             if (!obj.contains("role")) return true; // Default pass
@@ -219,9 +219,9 @@ class PermCommand : public Command {
                     break;
                 }
                 case SubCommands::Update: {
-                    if (!ab.extra.contains("update")) return true; // No more restrictions, pass
-                    if (ab.extra["update"].is_boolean()) return ab.extra["update"].get<bool>();
-                    auto& obj = ab.extra["update"];
+                    if (!perm.extra.contains("update")) return true; // No more restrictions, pass
+                    if (perm.extra["update"].is_boolean()) return perm.extra["update"].get<bool>();
+                    auto& obj = perm.extra["update"];
                     switch (this->targetType1) {
                         case TargetType::Role:
                             if (!obj.contains("role")) return true; // Default pass
