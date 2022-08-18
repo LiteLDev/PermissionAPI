@@ -18,6 +18,7 @@ class PermissionAPI {
     using FuncRoleExists = bool(*)(const std::string&);
     using FuncGetRole = void(*)(const std::string&, std::weak_ptr<PERM::Role>&);
     using FuncGetOrCreateRole = void(*)(const std::string&, std::weak_ptr<PERM::Role>&);
+    using FuncDeleteRole = void(*)(const std::string&);
     using FuncRegisterPermission = void(*)(const std::string&, const std::string&);
     using FuncDeletePermission = void(*)(const std::string&);
     using FuncPermissionExists = bool(*)(const std::string&);
@@ -31,6 +32,7 @@ class PermissionAPI {
     FuncRoleExists funcRoleExists;
     FuncGetRole funcGetRole;
     FuncGetOrCreateRole funcGetOrCreateRole;
+    FuncDeleteRole funcDeleteRole;
     FuncRegisterPermission funcRegisterPermission;
     FuncDeletePermission funcDeletePermission;
     FuncPermissionExists funcPermissionExists;
@@ -49,8 +51,19 @@ public:
     
     PermissionAPI(bool option = false) {
         if (!LL::hasPlugin("PermissionAPI")) {
-            throw std::runtime_error("Dependency plugin PermissionAPI not found");
+            if (!option) {
+                throw std::runtime_error("Dependency plugin PermissionAPI not found");
+            }
+            return;
         }
+        load();
+    }
+
+    /**
+     * @brief Load APIs by GetAddressProc.
+     *
+     */
+    void load() {
         auto pPtr = LL::getPlugin("PermissionAPI");
         if (!pPtr) {
             throw std::runtime_error("Cannot get the plugin object");
@@ -60,6 +73,7 @@ public:
         funcRoleExists = getFunc<FuncRoleExists>("PERM_RoleExists");
         funcGetRole = getFunc<FuncGetRole>("PERM_GetRole");
         funcGetOrCreateRole = getFunc<FuncGetOrCreateRole>("PERM_GetOrCreateRole");
+        funcDeleteRole = getFunc<FuncDeleteRole>("PERM_DeleteRole");
         funcRegisterPermission = getFunc<FuncRegisterPermission>("PERM_RegisterPermission");
         funcDeletePermission = getFunc<FuncDeletePermission>("PERM_DeletePermission");
         funcPermissionExists = getFunc<FuncPermissionExists>("PERM_PermissionExists");
@@ -140,6 +154,18 @@ public:
         std::weak_ptr<PERM::Role> ptr{};
         funcGetOrCreateRole(name, ptr);
         return ptr;
+    }
+
+    /**
+     * @brief Delete a role.
+     *
+     * @param  name  The name of the role.
+     */
+    void deleteRole(const std::string& name) {
+        if (funcDeleteRole == nullptr) {
+            throw std::runtime_error("Function not found");
+        }
+        funcDeleteRole(name);
     }
 
     /**
@@ -302,6 +328,14 @@ public:
      * @return std::weak_ptr<PERM::Role>  The role(weak ref).
      */
     static PERMAPI std::weak_ptr<PERM::Role> getOrCreateRole(const std::string& name);
+
+    /**
+     * @brief Delete a role.
+     *
+     * @param  name  The name of the role.
+     * @throws std::invalid_argument  If the role not found.
+     */
+    static PERMAPI void deleteRole(const std::string& name);
 
     /**
      * @brief Register an permission.

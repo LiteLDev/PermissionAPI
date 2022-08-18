@@ -106,6 +106,13 @@ std::shared_ptr<Role> Permission::getOrCreateRole(const std::string& name) {
     return (this->roles.contains(name) ? getRole(name) : createRole(name, name));
 }
 
+void Permission::deleteRole(const std::string& name) {
+    if (!this->roles.contains(name)) {
+        throw std::invalid_argument("Role not found");
+    }
+    this->roles.remove(name);
+}
+
 void Permission::registerPermission(const std::string& name, const std::string& desc) {
     if (!PermInstance::isValidPermissionName(name)) {
         throw std::invalid_argument("Invalid permission name: " + name);

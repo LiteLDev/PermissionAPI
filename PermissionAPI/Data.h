@@ -36,6 +36,8 @@ public:
     std::shared_ptr<PERM::Role> getRole(const std::string& name);
 
     std::shared_ptr<PERM::Role> getOrCreateRole(const std::string& name);
+
+    void deleteRole(const std::string& name);
     
     /**
      * @brief Register a permission.

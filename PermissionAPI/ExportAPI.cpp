@@ -22,6 +22,10 @@ PERMAPI void PERM_GetOrCreateRole(const std::string& name, std::weak_ptr<PERM::R
     ret = mod.perm.getOrCreateRole(name);
 }
 
+PERMAPI void PERM_DeleteRole(const std::string& name) {
+    mod.perm.deleteRole(name);
+}
+
 PERMAPI void PERM_RegisterPermission(const std::string& name, const std::string& desc) {
     mod.perm.registerPermission(name, desc);
 }
@@ -70,6 +74,10 @@ std::weak_ptr<PERM::Role> PermissionAPI::getRole(const std::string& name) {
 
 std::weak_ptr<PERM::Role> PermissionAPI::getOrCreateRole(const std::string& name) {
     return mod.perm.getOrCreateRole(name);
+}
+
+void PermissionAPI::deleteRole(const std::string& name) {
+    mod.perm.deleteRole(name);
 }
 
 void PermissionAPI::registerPermission(const std::string& name, const std::string& desc) {
