@@ -23,6 +23,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-PERMAPI void onPostInit() {
+extern "C"
+__declspec(dllexport)
+void onPostInit() {
     mod.entry();
 }

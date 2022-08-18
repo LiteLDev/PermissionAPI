@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "Mod.h"
-#include "Data.h"
+#include "PermissionAPI.h"
 
 #pragma warning(disable: 4297)
+
+extern "C" {
 
 PERMAPI void PERM_CreateRole(const std::string& name, const std::string& displayName, std::weak_ptr<PERM::Role>& ret) {
     ret = mod.perm.createRole(name, displayName);
@@ -50,4 +52,6 @@ PERMAPI void PERM_GetPlayerRoles(const xuid_t& xuid, PERM::Roles& ret) {
 
 PERMAPI void PERM_SaveData() {
     mod.perm.save();
+}
+
 }

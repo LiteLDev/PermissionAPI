@@ -1,13 +1,10 @@
 ﻿#ifndef PCH_H
 #define PCH_H
 
-#define _AMD64_
-#define NOMINMAX
 #include <LLAPI.h>
 #include <Global.h>
 #include <LoggerAPI.h>
 
-#define PERMAPI extern "C" _declspec(dllexport)
 #define PERM_VER_MAJOR 0
 #define PERM_VER_MINOR 1
 #define PERM_VER_REV 1

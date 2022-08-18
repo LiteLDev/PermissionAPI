@@ -1,0 +1,64 @@
+--set_toolchains("msvc")
+--set_arch("x64")
+--set_plat(os.host())
+add_rules('mode.release')
+
+target("PermissionAPI")
+	set_kind("shared")
+	set_basename("PermissionAPI")
+	set_runtimes("MD")
+	add_files("PermissionAPI/*.cpp")
+	add_files("PermissionAPI/*.rc")
+	--add_headerfiles("PermissionAPI/**.h")
+	--add_headerfiles("PermissionAPI/**.hpp")
+	add_defines(
+		"UNICODE",
+		"_UNICODE",
+		"NDEBUG",
+		"WIN32_LEAN_AND_MEAN", 
+		"_CRT_SECURE_NO_WARNINGS",
+		"_WINDOWS",
+		"_USRDLL",
+		"_AMD64_",
+		"NOMINMAX",
+		"PERMAPI_EXPORTS"
+	)
+	set_warnings("all") -- W3
+	set_optimize("faster") -- O2
+	set_languages("c17", "cxx20")
+	add_linkdirs(
+		"C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.19041.0\\um\\x64",
+		"SDK/Lib"
+	)
+	add_links(
+		"LiteLoader",
+		"SymDBHelper",
+		"bedrock_server_api",
+		"bedrock_server_var",
+		"delayimp"
+	)
+	add_syslinks(
+		"kernel32",
+		"user32",
+		"gdi32",
+		"winspool",
+		"comdlg32",
+		"advapi32",
+		"shell32",
+		"ole32",
+		"oleaut32",
+		"uuid",
+		"odbc32",
+		"odbccp32"
+	)
+	add_includedirs(
+		"SDK/Header",
+		"SDK/Header/third-party"
+	)
+	add_cxflags(
+		"/utf-8"
+	)
+	add_shflags(
+		"/DELAYLOAD:bedrock_server.dll"
+        --"/NODEFAULTLIB:msvcrt.lib"
+    )
