@@ -48,27 +48,21 @@ class PermissionAPI {
     }
 
 public:
-    
-    PermissionAPI(bool option = false) {
-        if (!LL::hasPlugin("PermissionAPI")) {
-            if (!option) {
-                throw std::runtime_error("Dependency plugin PermissionAPI not found");
-            }
-            return;
-        }
-        load();
-    }
 
     /**
-     * @brief Load APIs by GetAddressProc.
+     * @brief Init APIs by GetAddressProc.
      *
      */
-    void load() {
-        auto pPtr = LL::getPlugin("PermissionAPI");
-        if (!pPtr) {
-            throw std::runtime_error("Cannot get the plugin object");
+    void init(HMODULE hModule = nullptr) {
+        if (!hModule) {
+            auto pPtr = LL::getPlugin("PermissionAPI");
+            if (!pPtr) {
+                throw std::runtime_error("Cannot get the plugin object");
+            }
+            handle = pPtr->handle;
+        } else {
+            handle = hModule;
         }
-        hPlugin = pPtr->handle;
         funcCreateRole = getFunc<FuncCreateRole>("PERM_CreateRole");
         funcRoleExists = getFunc<FuncRoleExists>("PERM_RoleExists");
         funcGetRole = getFunc<FuncGetRole>("PERM_GetRole");
@@ -82,6 +76,16 @@ public:
         funcGetPlayerRoles = getFunc<FuncGetPlayerRoles>("PERM_GetPlayerRoles");
         funcGetPlayerPermissions = getFunc<FuncGetPlayerPermissions>("PERM_GetPlayerPermissions");
         funcSaveData = getFunc<FuncSaveData>("PERM_SaveData");
+    }
+    
+    PermissionAPI(bool option = false) {
+        if (!LL::hasPlugin("PermissionAPI")) {
+            if (!option) {
+                throw std::runtime_error("Dependency plugin PermissionAPI not found");
+            }
+            return;
+        }
+        init();
     }
 
     /**
