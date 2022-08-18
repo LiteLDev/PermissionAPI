@@ -16,7 +16,7 @@ Mod::Mod()
 }
 
 void Mod::entry() {
-    logger.info("PermissionAPI v{} loaded! Author: Jasonzyt", PERM_VER.toString(true));
+    //logger.info("PermissionAPI v{} loaded! Author: Jasonzyt", PERM_VER.toString(true));
     auto i18n = Translation::loadFromImpl(GetCurrentModule(), LL::getLoaderHandle());
     perm.load();
     // Register plugin permissions
