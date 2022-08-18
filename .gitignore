@@ -6,8 +6,10 @@
 **/bedrock_server_api.lib
 **/bedrock_server_var.lib
 
+vc140.pdb
 /.idea/*
 !/.idea/cmake.xml
 /cmake-build-*
 build/*
 /out/*
+.xmake/

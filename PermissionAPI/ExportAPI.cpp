@@ -55,3 +55,51 @@ PERMAPI void PERM_SaveData() {
 }
 
 }
+
+std::weak_ptr<PERM::Role> PermissionAPI::createRole(const std::string& name, const std::string& displayName) {
+    return mod.perm.createRole(name, displayName);
+}
+
+bool PermissionAPI::roleExists(const std::string& name) {
+    return mod.perm.roles.contains(name);
+}
+
+std::weak_ptr<PERM::Role> PermissionAPI::getRole(const std::string& name) {
+    return mod.perm.getRole(name);
+}
+
+std::weak_ptr<PERM::Role> PermissionAPI::getOrCreateRole(const std::string& name) {
+    return mod.perm.getOrCreateRole(name);
+}
+
+void PermissionAPI::registerPermission(const std::string& name, const std::string& desc) {
+    mod.perm.registerPermission(name, desc);
+}
+
+void PermissionAPI::deletePermission(const std::string& name) {
+    mod.perm.deletePermission(name);
+}
+
+bool PermissionAPI::permissionExists(const std::string& name) {
+    return mod.perm.permInfoList.contains(name);
+}
+
+bool PermissionAPI::checkPermission(const xuid_t& xuid, const std::string& name) {
+    return mod.perm.checkPermission(xuid, name);
+}
+
+bool PermissionAPI::isMemberOf(const std::string& xuid, const std::string& role) {
+    return mod.perm.isMemberOf(xuid, role);
+}
+
+PERM::Permissions PermissionAPI::getPlayerPermissions(const xuid_t& xuid) {
+    return mod.perm.getPlayerPermissions(xuid);
+}
+
+PERM::Roles PermissionAPI::getPlayerRoles(const xuid_t& xuid) {
+    return mod.perm.getPlayerRoles(xuid);
+}
+
+void PermissionAPI::saveData() {
+    mod.perm.save();
+}
