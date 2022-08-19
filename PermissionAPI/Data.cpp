@@ -80,6 +80,9 @@ std::shared_ptr<Role> Permission::createRole(const std::string& name, const std:
     if (this->roles.contains(name)) {
         throw std::invalid_argument("Role already exists");
     }
+    if (!Role::isValidRoleName(name)) {
+        throw std::invalid_argument("Invalid role name: " + name);
+    }
     Role* role = nullptr;
     if (name == "everyone") {
         role = new EveryoneRole;
