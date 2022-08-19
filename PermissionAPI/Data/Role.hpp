@@ -27,20 +27,8 @@ namespace PERM {
         virtual bool hasPermission(const std::string& name) const {
             return this->permissions.contains(name) && this->permissions.at(name).enabled;
         }
-        virtual void setPermission(const std::string& name, bool enabled = true, const nlohmann::json& extra = nlohmann::json()) {
-            if (!this->permissions.contains(name)) {
-                this->permissions.push_back({name, enabled, extra});
-            } else {
-                this->permissions.at(name).enabled = enabled;
-                if (!extra.is_null()) {
-                    if (extra.is_object()) {
-                        this->permissions.at(name).extra = extra;
-                    } else {
-                        throw std::runtime_error("Failed to set the permission: the extra data is not a json object");
-                    }
-                }
-            }
-        }
+        virtual void setPermission(const std::string& name, bool enabled = true, const nlohmann::json& extra = nlohmann::json());
+
         virtual void removePermission(const std::string& name) {
             this->permissions.remove(name);
         }

@@ -1,7 +1,25 @@
 #include "pch.h"
 #include <Utils/FileHelper.h>
 #include "Data/JsonHelper.hpp"
-#include "Data.h"
+#include "Mod.h"
+
+void PERM::Role::setPermission(const std::string& name, bool enabled, const nlohmann::json& extra) {
+    if (!mod.perm.permInfoList.contains(name)) {
+        throw std::invalid_argument("Permission " + name + " is not registered!");
+    }
+    if (!this->permissions.contains(name)) {
+        this->permissions.push_back({name, enabled, extra});
+    } else {
+        this->permissions.at(name).enabled = enabled;
+        if (!extra.is_null()) {
+            if (extra.is_object()) {
+                this->permissions.at(name).extra = extra;
+            } else {
+                throw std::runtime_error("Failed to set the permission: the extra data is not a json object");
+            }
+        }
+    }
+}
 
 using namespace PERM;
 
