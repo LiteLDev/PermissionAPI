@@ -117,42 +117,42 @@ inline void to_json(nlohmann::json& j, const PERM::PermInfoList& v) {
 
 // GeneralRole
 inline void from_json(const nlohmann::json& j, PERM::GeneralRole& v) {
-    if (j.contains("members")) v.members = j["members"].get<PERM::Members>();
+    if (j.contains("members")) v.getMembers() = j["members"].get<PERM::Members>();
     if (j.contains("priority")) v.priority = j["priority"];
     if (j.contains("displayName")) v.displayName = j["displayName"];
-    if (j.contains("permissions")) from_json(j["permissions"], v.permissions);
+    if (j.contains("permissions")) from_json(j["permissions"], v.getPermissions());
 }
 inline void to_json(nlohmann::json& j, const PERM::GeneralRole& v) {
-    j["members"] = v.members;
+    j["members"] = v.getMembers();
     j["priority"] = v.priority;
     j["displayName"] = v.displayName;
-    to_json(j["permissions"], v.permissions);
+    to_json(j["permissions"], v.getPermissions());
 }
 
 // EveryoneRole
 inline void from_json(const nlohmann::json& j, PERM::EveryoneRole& v) {
     if (j.contains("priority")) v.priority = j["priority"];
     if (j.contains("displayName")) v.displayName = j["displayName"];
-    if (j.contains("permissions")) from_json(j["permissions"], v.permissions);
+    if (j.contains("permissions")) from_json(j["permissions"], v.getPermissions());
 }
 inline void to_json(nlohmann::json& j, const PERM::EveryoneRole& v) {
     j["priority"] = v.priority;
     j["displayName"] = v.displayName;
-    to_json(j["permissions"], v.permissions);
+    to_json(j["permissions"], v.getPermissions());
 }
 
 // AdminRole
 inline void from_json(const nlohmann::json& j, PERM::AdminRole& v) {
-    if (j.contains("members")) v.members = j["members"].get<PERM::Members>();
+    if (j.contains("members")) v.getMembers() = j["members"].get<PERM::Members>();
     if (j.contains("priority")) v.priority = j["priority"];
     if (j.contains("displayName")) v.displayName = j["displayName"];
-    if (j.contains("permissions")) from_json(j["permissions"], v.permissions);
+    if (j.contains("permissions")) from_json(j["permissions"], v.getPermissions());
 }
 inline void to_json(nlohmann::json& j, const PERM::AdminRole& v) {
-    j["members"] = v.members;
+    j["members"] = v.getMembers();
     j["priority"] = v.priority;
     j["displayName"] = v.displayName;
-    to_json(j["permissions"], v.permissions);
+    to_json(j["permissions"], v.getPermissions());
 }
 
 // Roles

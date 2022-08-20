@@ -50,9 +50,9 @@ bool Permission::validateData() {
             logger.warn(tr("Role name '{}' has been replaced with '{}'.", oldName, role->name));
             result = true;
         }
-        for (auto& ab : role->permissions) {
+        for (const auto& ab : role->getPermissions()) {
             if (!permInfoList.contains(ab.name)) {
-                permInfoList.push_back({ ab.name, "" });
+                permInfoList.push_back({ab.name, ""});
                 result = true;
             }
         }
@@ -152,7 +152,7 @@ void Permission::deletePermission(const std::string& name) {
     this->permInfoList.remove(name);
     for (auto& role : this->roles) {
         if (role->getType() != Role::Type::Admin) {
-            if (role->permissionDefined(name)) {
+            if (role->permissionExists(name)) {
                 role->removePermission(name);
             }
         }
@@ -180,26 +180,54 @@ Roles Permission::getPlayerRoles(const xuid_t& xuid) const {
 
 Permissions Permission::getPlayerPermissions(const xuid_t& xuid) const {
     Permissions result;
-    if (this->isMemberOf(xuid, "admin")) {
-        for (auto& info : permInfoList) {
-            result.push_back(PermInstance{info.name, true});
-        }
-        return result;
-    }
     auto playerRoles = this->getPlayerRoles(xuid);
     for (auto& role : playerRoles.sortByPriority()) {
-        for (auto& perm : role->permissions) {
-            if (perm.enabled) {
-                if (result.contains(perm.name)) {
-                    auto& ext = result[perm.name].extra;
-                    if (ext.is_object()) ext.merge_patch(perm.extra);
-                    else ext = perm.extra;
-                } else {
-                    result.push_back(perm);
+        switch (role->getType()) {
+            case Role::Type::Admin: {
+                for (const auto& perm : role->getPermissions()) {
+                    if (perm.enabled) {
+                        if (result.contains(perm.name)) {
+                            auto& ext = result[perm.name].extra;
+                            if (ext.is_object()) {
+                                ext.merge_patch(perm.extra);
+                            } else {
+                                ext = perm.extra;
+                            }
+                        } else {
+                            result.push_back(perm);
+                        }
+                    } else {
+                        if (result.contains(perm.name)) {
+                            result.remove(perm.name);
+                        }
+                    }
                 }
-            } else {
-                if (result.contains(perm.name))
-                    result.remove(perm.name);
+                for (auto& perm : this->permInfoList) {
+                    if (!result.contains(perm.name)) {
+                        result.push_back({perm.name, true});
+                    }
+                }
+                break;
+            }
+            default: {
+                for (const auto& perm : role->getPermissions()) {
+                    if (perm.enabled) {
+                        if (result.contains(perm.name)) {
+                            auto& ext = result[perm.name].extra;
+                            if (ext.is_object()) {
+                                ext.merge_patch(perm.extra);
+                            } else {
+                                ext = perm.extra;
+                            }
+                        } else {
+                            result.push_back(perm);
+                        }
+                    } else {
+                        if (result.contains(perm.name)) {
+                            result.remove(perm.name);
+                        }
+                    }
+                }
             }
         }
     }

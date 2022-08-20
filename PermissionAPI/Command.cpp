@@ -552,20 +552,20 @@ class PermCommand : public Command {
                 outp.trAddMessage("permapi.cmd.output.view.role.info.displayName", role->displayName);
                 outp.trAddMessage("permapi.cmd.output.view.role.info.priority", std::to_string(role->priority));
                 if (role->getType() != Role::Type::Everyone) {
-                    if (role->members.empty()) {
+                    if (role->getMembers().empty()) {
                         outp.trAddMessage("permapi.cmd.output.view.role.info.membersNone");
                     } else {
                         outp.trAddMessage("permapi.cmd.output.view.role.info.members");
-                        for (auto& xid : role->members) {
+                        for (auto& xid : role->getMembers()) {
                             outp.trAddMessage("  * " + PlayerInfo::fromXuid(xid) + " (" + xid + ")");
                         }
                     }
                 }
-                if (role->permissions.empty()) {
+                if (role->getPermissions().empty()) {
                     outp.trAddMessage("permapi.cmd.output.view.role.info.permissionsNone");
                 } else {
                     outp.trAddMessage("permapi.cmd.output.view.role.info.permissions");
-                    for (auto& perm : role->permissions) {
+                    for (auto& perm : role->getPermissions()) {
                         std::string suffix = (perm.enabled ? 
                             "permapi.cmd.output.view.role.enabled" :
                             "permapi.cmd.output.view.role.disabled");
