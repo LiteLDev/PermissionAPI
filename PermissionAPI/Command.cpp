@@ -46,13 +46,13 @@ class PermCommand : public Command {
         Update,
         View,
         List,
-    } subcmd = SubCommands::None;
+    };
     enum class Action : char {
         None = -1,
         Add,
         Set,
         Remove
-    } action = Action::None;
+    };
     enum class TargetType : char {
         None = -1,
         Role,
@@ -62,8 +62,10 @@ class PermCommand : public Command {
         Member,
         DisplayName
     };
-    TargetType targetType1 = TargetType::None;
-    TargetType targetType2 = TargetType::None;
+    mutable SubCommands subcmd = SubCommands::None;
+    mutable Action action = Action::None;
+    mutable TargetType targetType1 = TargetType::None;
+    mutable TargetType targetType2 = TargetType::None;
 
     std::string name1;
     std::string name2;
@@ -913,11 +915,24 @@ class PermCommand : public Command {
         return false;
     }
 
+    void parseShortcut() const {
+        if (this->subcmd == SubCommands::None) {
+            if (this->action != Action::None) {
+                this->subcmd = SubCommands::Update;
+                this->targetType1 = TargetType::Role;
+            } else if (this->action == Action::None && this->targetType1 == TargetType::Role) {
+                // perm role <Name>
+                this->subcmd = SubCommands::View;
+            }
+        }
+    }
+
 public:
 
     void execute(CommandOrigin const& ori, CommandOutput& outp) const {
         try {
             outp.setLanguageCode(ori);
+            parseShortcut();
             auto oriType = (OriginType)ori.getOriginType();
             if (oriType == OriginType::Player) {
                 auto pl = ori.getPlayer();
@@ -1059,6 +1074,34 @@ public:
         reg->registerOverload<PermCommand>("perm", subcmd_list, target_role1);
         // perm list perm
         reg->registerOverload<PermCommand>("perm", subcmd_list, target_perm1);
+
+        // perm add member <Role> <Name>
+        reg->registerOverload<PermCommand>("perm", action_add, target_member2, param_name1, param_name2);
+        // perm rm member <Role> <Name>
+        reg->registerOverload<PermCommand>("perm", action_remove, target_member2, param_name1, param_name2);
+        // perm add perm <Role> <Perm> [Enabled] [Extra]
+        reg->registerOverload<PermCommand>("perm", action_add, target_perm2, param_name1, param_name2, param_enabled, param_extra);
+        // perm rm perm <Role> <Perm>
+        reg->registerOverload<PermCommand>("perm", action_remove, target_perm2, param_name1, param_name2);
+        // perm set perm <Role> <Perm> <Enabled> [Extra]
+        reg->registerOverload<PermCommand>("perm", action_set, target_perm2, param_name1, param_name2, param_enabled, param_extra);
+        // perm set priority <Role> [Priority]
+        reg->registerOverload<PermCommand>("perm", action_set, target_priority2, param_name1, param_priority);
+    
+        // perm role <Name>
+        reg->registerOverload<PermCommand>("perm", target_role1, param_name1);
+        // perm role <Name> add member <Name>
+        reg->registerOverload<PermCommand>("perm", target_role1, param_name1, action_add, target_member2, param_name2);
+        // perm role <Name> rm member <Name>
+        reg->registerOverload<PermCommand>("perm", target_role1, param_name1, action_remove, target_member2, param_name2);
+        // perm role <Name> add perm <Name> [Enabled] [Extra]
+        reg->registerOverload<PermCommand>("perm", target_role1, param_name1, action_add, target_perm2, param_name2, param_enabled, param_extra);
+        // perm role <Name> add perm <Name>
+        reg->registerOverload<PermCommand>("perm", target_role1, param_name1, action_add, target_perm2, param_name2);
+        // perm role <Name> set perm <Name> <Enabled> [Extra]
+        reg->registerOverload<PermCommand>("perm", target_role1, param_name1, action_set, target_perm2, param_name2, param_enabled, param_extra);
+        // perm role <Name> set priority <Priority>
+        reg->registerOverload<PermCommand>("perm", target_role1, param_name1, action_set, target_priority2, param_priority);
     }
 };
 
