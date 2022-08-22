@@ -7,7 +7,7 @@
 
 #define PERM_VER_MAJOR 0
 #define PERM_VER_MINOR 1
-#define PERM_VER_REV 1
+#define PERM_VER_REV 2
 #define PERM_VER_STATUS LL::Version::Beta
 
 extern Logger& logger;
