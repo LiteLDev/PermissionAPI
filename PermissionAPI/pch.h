@@ -5,9 +5,9 @@
 #include <Global.h>
 #include <LoggerAPI.h>
 
-#define PERM_VER_MAJOR 0
-#define PERM_VER_MINOR 1
-#define PERM_VER_REV 2
+#define PERM_VER_MAJOR 2
+#define PERM_VER_MINOR 6
+#define PERM_VER_REV 0
 #define PERM_VER_STATUS LL::Version::Beta
 
 extern Logger& logger;
