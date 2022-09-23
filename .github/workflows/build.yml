@@ -23,7 +23,7 @@ jobs:
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: |
           mkdir SDK/Tools/Server
-          curl -L -o LINK.txt https://raw.githubusercontent.com/LiteLDev/LiteLoaderBDS/main/Scripts/LINK.txt
+          curl -L -o LINK.txt https://raw.githubusercontent.com/LiteLDev/LiteLoaderBDS//develop/scripts/LINK.txt
           ServerLink=$(cat 'LINK.txt')
           echo "ServerLink: $ServerLink"
           curl -L -o SDK/Tools/Server/server.zip "$ServerLink"

@@ -7,7 +7,7 @@
  * 
  */
 #pragma once
-#include <third-party/Nlohmann/json.hpp>
+#include <Nlohmann/json.hpp>
 #include "Foundation.hpp"
 
 namespace PERM {

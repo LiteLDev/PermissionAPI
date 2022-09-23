@@ -17,7 +17,7 @@ Mod::Mod()
 
 void Mod::entry() {
     //logger.info("PermissionAPI v{} loaded! Author: Jasonzyt", PERM_VER.toString(true));
-    auto i18n = Translation::loadFromImpl(GetCurrentModule(), LL::getLoaderHandle());
+    auto i18n = Translation::loadFromImpl(GetCurrentModule(), ll::getLoaderHandle());
     perm.load();
     // Register plugin permissions
     if (!perm.permInfoList.contains("PermissionAPI:cmd_control")) {
