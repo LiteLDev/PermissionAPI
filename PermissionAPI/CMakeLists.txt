@@ -15,12 +15,13 @@ file(GLOB_RECURSE SRC_FILES_DIR
 )
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}/SDK/Header
-	${CMAKE_SOURCE_DIR}/SDK/Header/third-party
+	${CMAKE_SOURCE_DIR}/LiteLoader/include
+    ${CMAKE_SOURCE_DIR}/LiteLoader/include/llapi
+	${CMAKE_SOURCE_DIR}/LiteLoader/third-party/include
 )
 
 link_directories(
-    ${CMAKE_SOURCE_DIR}/SDK/Lib
+    ${CMAKE_SOURCE_DIR}/LiteLoader/lib
 )
 
 add_definitions(
@@ -69,9 +70,16 @@ add_link_options(
 
 add_library(PermissionAPI SHARED ${SRC_FILES_DIR})
 
-target_link_libraries(PermissionAPI 
-	"${CMAKE_SOURCE_DIR}/SDK/Lib/LiteLoader.lib"
-	"${CMAKE_SOURCE_DIR}/SDK/Lib/bedrock_server_api.lib"
-	"${CMAKE_SOURCE_DIR}/SDK/Lib/bedrock_server_var.lib"
-	"${CMAKE_SOURCE_DIR}/SDK/Lib/SymDBHelper.lib"
+target_link_libraries(PermissionAPI LiteLoader
+		"${CMAKE_SOURCE_DIR}/LiteLoader/lib/bedrock_server_api.lib"
+		"${CMAKE_SOURCE_DIR}/LiteLoader/lib/bedrock_server_var.lib"
+		SymDBHelper
+		)
+
+add_custom_command(
+		TARGET PermissionAPI POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:PermissionAPI> ${CMAKE_BINARY_DIR}/output/plugins/LiteLoader/PermissionAPI.dll
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:PermissionAPI> ${CMAKE_BINARY_DIR}/pdb/PermissionAPI.pdb
+		COMMENT "Copying PermissionAPI DLL and PDB to output directory"
+		VERBATIM
 )
