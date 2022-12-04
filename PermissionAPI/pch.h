@@ -6,7 +6,7 @@
 #include <LoggerAPI.h>
 
 #define PERM_VER_MAJOR 2
-#define PERM_VER_MINOR 7
+#define PERM_VER_MINOR 9
 #define PERM_VER_REV 0
 #define PERM_VER_STATUS ll::Version::Beta
 
