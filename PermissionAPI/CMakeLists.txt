@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 project(PermissionAPI)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE Release)
 
 file(GLOB_RECURSE SRC_FILES_DIR
@@ -12,9 +12,9 @@ file(GLOB_RECURSE SRC_FILES_DIR
 )
 
 include_directories(
-	${CMAKE_SOURCE_DIR}/LiteLoader/include
+    ${CMAKE_SOURCE_DIR}/LiteLoader/include
     ${CMAKE_SOURCE_DIR}/LiteLoader/include/llapi
-	${CMAKE_SOURCE_DIR}/LiteLoader/third-party/include
+    ${CMAKE_SOURCE_DIR}/LiteLoader/third-party/include
 )
 
 link_directories(
@@ -56,7 +56,7 @@ add_link_options(
     /DLL
     /IGNORE:4199
     /INCREMENTAL:NO
-    /LTCG:INCREMENTAL
+    /LTCG
     /MANIFESTUAC:NO
     /MACHINE:X64
     /NOLOGO
@@ -68,15 +68,15 @@ add_link_options(
 add_library(PermissionAPI SHARED ${SRC_FILES_DIR})
 
 target_link_libraries(PermissionAPI LiteLoader
-		"${CMAKE_SOURCE_DIR}/LiteLoader/lib/bedrock_server_api.lib"
-		"${CMAKE_SOURCE_DIR}/LiteLoader/lib/bedrock_server_var.lib"
-		SymDBHelper
-		)
+    "${CMAKE_SOURCE_DIR}/LiteLoader/lib/bedrock_server_api.lib"
+    "${CMAKE_SOURCE_DIR}/LiteLoader/lib/bedrock_server_var.lib"
+    SymDBHelper
+)
 
 add_custom_command(
-		TARGET PermissionAPI POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:PermissionAPI> ${CMAKE_BINARY_DIR}/output/plugins/LiteLoader/PermissionAPI.dll
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:PermissionAPI> ${CMAKE_BINARY_DIR}/pdb/PermissionAPI.pdb
-		COMMENT "Copying PermissionAPI DLL and PDB to output directory"
-		VERBATIM
+    TARGET PermissionAPI POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:PermissionAPI> ${CMAKE_BINARY_DIR}/output/plugins/LiteLoader/PermissionAPI.dll
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:PermissionAPI> ${CMAKE_BINARY_DIR}/pdb/PermissionAPI.pdb
+    COMMENT "Copying PermissionAPI DLL and PDB to output directory"
+    VERBATIM
 )
